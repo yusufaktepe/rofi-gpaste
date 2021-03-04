@@ -56,7 +56,7 @@ usage() {
 		\r      add user input to clipboard   - Return
 		\r
 
-		\r    History menu
+		\r    Histories menu
 		\r      - Delete selected history     - $Kb_Delete
 		\r      - Return to active history    - $Kb_Hist
 		\r      - Switch to history OR
@@ -96,6 +96,8 @@ edit_item() {
 }
 
 archive_item() {
+	[ "$HistName" = archive ] && return
+
 	Item=$(print_item "$1")
 	gpaste-client switch-history archive
 	gpaste-client add "$Item"
