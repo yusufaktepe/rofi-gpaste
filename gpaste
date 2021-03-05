@@ -84,6 +84,7 @@ delete_item() { gpaste-client --use-index delete "$1" ;}
 edit_item() {
 	TmpFile=$(mktemp "/tmp/$Script.XXXX")
 	print_item "$1" > "$TmpFile"
+	gpaste-client stop # Stop tracking to prevent index from shifting
 
 	# Check if we need a terminal window
 	if [ -t 2 ]; then
@@ -92,6 +93,7 @@ edit_item() {
 		$TERMINAL -e "$EDITOR" "$TmpFile" >/dev/null 2>&1
 	fi
 
+	gpaste-client start
 	gpaste-client --use-index replace "$1" "$(cat "$TmpFile")"
 	rm -f "$TmpFile"
 }
