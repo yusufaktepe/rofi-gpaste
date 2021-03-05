@@ -153,7 +153,7 @@ menu_histories() {
 	case $Ret in
 		10) gpaste-client delete-history "$HistSelected"; HistIndex=$Index exec "$0" -H ;;
 		11) exec "$0" ;;
-		0)  [ -n "$HistSelected" ] && gpaste-client switch-history "$HistSelected" ;;
+		0)  [ -n "$HistSelected" ] && gpaste-client switch-history "$HistSelected"; exec "$0" ;;
 		*)  exit $Ret
 	esac
 }
@@ -188,7 +188,7 @@ menu() {
 		13) edit_item "$Index"; Index=$Index exec "$0" ;;
 		14) archive_item "$Index"; Index=$Index exec "$0" ;;
 		15) backup_history; Index=$Index exec "$0" ;;
-		16) menu_histories; exec "$0" ;;
+		16) menu_histories ;;
 		17) select_item "$Index"; paste_clip ;;
 		18) gpaste-client switch-history history; exec "$0" ;;
 		19) gpaste-client switch-history archive; exec "$0" ;;
