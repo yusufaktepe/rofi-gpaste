@@ -18,7 +18,7 @@ Kb_LaunchGUI='F1'
 
 # Rofi command
 _rofi() {
-	rofi -dmenu -i -l 10 -width 60 "$@"
+	rofi -format 'i:s' -dmenu -i -l 10 -width 60 "$@"
 }
 
 Script=${0##*/}
@@ -30,6 +30,7 @@ usage() {
 		Usage: $Script [OPT]
 
 		\r  -c, --clear        - Clear history
+		\r  -H, --histories    - Histories menu
 		\r  -i, --input        - Read stdin into clipboard
 		\r  -p, --paste [1-9]  - Paste clipboard item by index
 		\r  -s, --selpaste     - Paste selection
@@ -141,13 +142,16 @@ backup_history() {
 menu_histories() {
 	HistSelected=$(
 		gpaste-client list-histories | _rofi -p ' Histories' \
+			-selected-row "${HistIndex:-0}" \
 			-kb-custom-1 "$Kb_Delete" \
 			-kb-custom-2 "$Kb_Hist"
 	)
 	Ret=$?
+	Index=${HistSelected%%:*}
+	HistSelected=${HistSelected#*:}
 
 	case $Ret in
-		10) gpaste-client delete-history "$HistSelected" ;;
+		10) gpaste-client delete-history "$HistSelected"; HistIndex=$Index exec "$0" -H ;;
 		11) exec "$0" ;;
 		0)  [ -n "$HistSelected" ] && gpaste-client switch-history "$HistSelected" ;;
 		*)  exit $Ret
@@ -158,8 +162,8 @@ menu() {
 	HistName=$(gpaste-client get-history)
 
 	Clip=$(
-		print_history |
-			_rofi -format 'i:s' -p " $HistName" \
+		print_history | _rofi -p " $HistName" \
+			-selected-row "${Index:-0}" \
 			-kb-custom-1 "$Kb_Clear" \
 			-kb-custom-2 "$Kb_Toggle" \
 			-kb-custom-3 "$Kb_Delete" \
@@ -180,10 +184,10 @@ menu() {
 	case $Ret in
 		10) clear_history ;;
 		11) toggle_track ;;
-		12) delete_item "$Index"; exec "$0" ;;
-		13) edit_item "$Index"; exec "$0" ;;
-		14) archive_item "$Index"; exec "$0" ;;
-		15) backup_history; exec "$0" ;;
+		12) delete_item "$Index"; Index=$Index exec "$0" ;;
+		13) edit_item "$Index"; Index=$Index exec "$0" ;;
+		14) archive_item "$Index"; Index=$Index exec "$0" ;;
+		15) backup_history; Index=$Index exec "$0" ;;
 		16) menu_histories; exec "$0" ;;
 		17) select_item "$Index"; paste_clip ;;
 		18) gpaste-client switch-history history; exec "$0" ;;
@@ -197,6 +201,8 @@ menu() {
 case $1 in
 	-c|--clear)
 		clear_history ;;
+	-H|--histories)
+		menu_histories ;;
 	-p|--paste)
 		[ -z "$2" ] && printf '%s\n' "Please provide an index [0-9]"; exit 1
 		print_item $(($2-1)) | xsel; paste_selection ;;

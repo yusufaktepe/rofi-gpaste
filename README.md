@@ -55,6 +55,7 @@ Run `gpaste -h` to see all options and rofi keybindings.
 Usage: gpaste [OPT]
 
   -c, --clear        - Clear history
+  -H, --histories    - Histories menu
   -i, --input        - Read stdin into clipboard
   -p, --paste [1-9]  - Paste clipboard item by index
   -s, --selpaste     - Paste selection
