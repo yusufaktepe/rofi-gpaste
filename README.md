@@ -31,7 +31,7 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 <tr><td> <code>Alt+c</code>       </td> <td> Clear history                                         </td></tr>
 <tr><td> <code>Alt+p</code>       </td> <td> Toggle tracking changes                               </td></tr>
 <tr><td> <code>Alt+d</code>       </td> <td> Delete selected item                                  </td></tr>
-<tr><td> <code>Alt+e</code>       </td> <td> Edit selected item                                    </td></tr>
+<tr><td> <code>Alt+e</code>       </td> <td> Edit selected item **                                 </td></tr>
 <tr><td> <code>Alt+s</code>       </td> <td> Archive selected item                                 </td></tr>
 <tr><td> <code>Alt+B</code>       </td> <td> Backup current history                                </td></tr>
 <tr><td> <code>Alt+h</code>       </td> <td> List and switch histories                             </td></tr>
@@ -47,6 +47,8 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 <tr><td> <code>Return</code>      </td> <td> Switch to history OR create new one with input        </td></tr>
 </tbody>
 </table>
+
+\** This shortcut assumes that you have set the `TERMINAL` and `EDITOR` environment variables.
 
 ---
 
