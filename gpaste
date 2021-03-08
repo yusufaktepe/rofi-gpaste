@@ -74,16 +74,17 @@ print_history() {
 		while read -r Item; do
 			# remove uuid's
 			printf '%s\n' "${Item#* }"
-		done | sed 's/^[ \t]*//g' # Hide leading whitespace
+		done | sed 's/^[ \t]*//' # Hide leading whitespace
 }
 
-print_item() { gpaste-client --use-index get "$1" | sed 's/^[ \t]*//g' ;}
+print_item() { gpaste-client --use-index get "$1" ;}
 select_item() { gpaste-client --use-index select "$1" ;}
 delete_item() { gpaste-client --use-index delete "$1" ;}
 
 edit_item() {
 	TmpFile=$(mktemp "/tmp/$Script.XXXX")
 	print_item "$1" > "$TmpFile"
+
 	gpaste-client stop # Stop tracking to prevent index from shifting
 
 	# Check if we need a terminal window
@@ -94,7 +95,12 @@ edit_item() {
 	fi
 
 	gpaste-client start
-	gpaste-client --use-index replace "$1" "$(cat "$TmpFile")"
+
+	if [ -z "$(sed 's/^[ \t]*//' "$TmpFile")" ]; then
+		delete_item "$1"
+	else
+		gpaste-client --use-index replace "$1" "$(cat "$TmpFile")"
+	fi
 	rm -f "$TmpFile"
 }
 
