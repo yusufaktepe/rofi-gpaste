@@ -77,7 +77,12 @@ print_history() {
 		done | sed 's/^[ \t]*//' # Hide leading whitespace
 }
 
-print_item() { gpaste-client --use-index get "$1" ;}
+print_item() {
+	gpaste-client --use-index get "$1" |
+		# Remove blank lines from the beginning/end
+		sed -e '/./,$!d' -e :a -e '/^\n*$/{$d;N;ba' -e '}'
+}
+
 select_item() { gpaste-client --use-index select "$1" ;}
 delete_item() { gpaste-client --use-index delete "$1" ;}
 
