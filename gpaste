@@ -67,7 +67,7 @@ usage() {
 }
 
 # Start the daemon if it's not running
-pidof gpaste-daemon >/dev/null || setsid -f gpaste-client daemon >/dev/null 2>&1
+pidof -q gpaste-daemon || setsid -f gpaste-client daemon >/dev/null 2>&1
 
 print_history() {
 	gpaste-client --oneline |
@@ -145,7 +145,12 @@ paste_selection() {
 	xdotool type --delay 0 --clearmodifiers -- "$(xsel -o)"
 }
 
-clear_history() { gpaste-client empty; xsel -c ;}
+clear_history() {
+	[ "$HistName" = archive ] &&
+		Confirm=$(printf 'Yes\nNo' | _rofi -p "Clear $HistName?")
+
+	[ ${Confirm:-0:Yes} = 0:Yes ] && { gpaste-client empty; xsel -c ;}
+}
 
 backup_history() {
 	BackupName=${HistName}_$(date +%Y-%m-%d_%H-%M-%S)
