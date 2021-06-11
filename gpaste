@@ -222,7 +222,7 @@ case $1 in
 	-H|--histories)
 		menu_histories ;;
 	-p|--paste)
-		[ -z "$2" ] && printf '%s\n' "Please provide an index [0-9]"; exit 1
+		[ -z "$2" ] && { printf '%s\n' "Please provide an index [1-9]"; exit 1 ;}
 		print_item $(($2-1)) | xsel; paste_selection ;;
 	-s|--selpaste)
 		paste_selection ;;
