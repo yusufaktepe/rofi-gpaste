@@ -20,6 +20,7 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 - xdotool *
 - xprop *
 - awk *
+- qrencode (for QR code generation)
 
 \* Only required for automatically typing/pasting.
 
@@ -36,6 +37,7 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 <tr><td> <code>Alt+B</code>       </td> <td> Backup current history                                </td></tr>
 <tr><td> <code>Alt+h</code>       </td> <td> List and switch histories                             </td></tr>
 <tr><td> <code>Alt+Return</code>  </td> <td> Paste selected item                                   </td></tr>
+<tr><td> <code>Alt+q</code>       </td> <td> Display QR code                                       </td></tr>
 <tr><td> <code>Alt+1</code>       </td> <td> Switch to main clipboard                              </td></tr>
 <tr><td> <code>Alt+2</code>       </td> <td> Switch to clipboard archive                           </td></tr>
 <tr><td> <code>F1</code>          </td> <td> Launch GPaste GUI                                     </td></tr>

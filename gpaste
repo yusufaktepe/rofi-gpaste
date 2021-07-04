@@ -11,6 +11,7 @@ Kb_Edit='Alt+e'
 Kb_Archive='Alt+s'
 Kb_Hist='Alt+h'
 Kb_Paste='Alt+Return'
+Kb_QR='Alt+q'
 Kb_Backup='Alt+B'
 Kb_Switch_Main='Alt+1'
 Kb_Switch_Archive='Alt+2'
@@ -50,6 +51,7 @@ usage() {
 		\r    - Backup current history        - $Kb_Backup
 		\r    - List and switch histories     - $Kb_Hist
 		\r    - Paste selected item           - $Kb_Paste
+		\r    - Display QR code               - $Kb_QR
 		\r    - Switch to main clipboard      - $Kb_Switch_Main
 		\r    - Switch to clipboard archive   - $Kb_Switch_Archive
 		\r    - Launch GPaste GUI             - $Kb_LaunchGUI
@@ -145,6 +147,13 @@ paste_selection() {
 	xdotool type --delay 0 --clearmodifiers -- "$(xsel -o)"
 }
 
+qr_code() {
+	TmpQR=$(mktemp --suffix=.png "/tmp/${Script}_qr.XXXX")
+	print_item "$1" | qrencode -s 10 -d 300 -v 8 -l H -o "$TmpQR"
+
+	xdg-open "$TmpQR" && rm -f "$TmpQR"
+}
+
 clear_history() {
 	[ "$HistName" = archive ] &&
 		Confirm=$(printf 'Yes\nNo' | _rofi -p "Clear $HistName?")
@@ -190,9 +199,10 @@ menu() {
 			-kb-custom-6 "$Kb_Backup" \
 			-kb-custom-7 "$Kb_Hist" \
 			-kb-custom-8 "$Kb_Paste" \
-			-kb-custom-9 "$Kb_Switch_Main" \
-			-kb-custom-10 "$Kb_Switch_Archive" \
-			-kb-custom-11 "$Kb_LaunchGUI"
+			-kb-custom-9 "$Kb_QR" \
+			-kb-custom-10 "$Kb_Switch_Main" \
+			-kb-custom-11 "$Kb_Switch_Archive" \
+			-kb-custom-12 "$Kb_LaunchGUI"
 	)
 	Ret=$?
 	Index=${Clip%%:*}
@@ -208,9 +218,10 @@ menu() {
 		15) backup_history; Index=$Index exec "$0" ;;
 		16) menu_histories ;;
 		17) select_item "$Index"; paste_clip ;;
-		18) gpaste-client switch-history history; exec "$0" ;;
-		19) gpaste-client switch-history archive; exec "$0" ;;
-		20) gpaste-client ui ;;
+		18) qr_code "$Index" ;;
+		19) gpaste-client switch-history history; exec "$0" ;;
+		20) gpaste-client switch-history archive; exec "$0" ;;
+		21) gpaste-client ui ;;
 		0)  { [ "$Index" -lt 0 ] && printf '%s' "${Clip#*:}" | gpaste-client ;} || select_item "$Index" ;;
 		*)  exit $Ret
 	esac
