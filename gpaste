@@ -19,7 +19,9 @@ Kb_LaunchGUI='F1'
 
 # Rofi command
 _rofi() {
-	rofi -format 'i:s' -dmenu -i -l 10 -width 60 "$@"
+	# Increase window width by adding:
+	#     -theme-str 'window {width: 60%;}'
+	rofi -format 'i:s' -dmenu -i -l 10 "$@"
 }
 
 Script=${0##*/}
@@ -89,6 +91,8 @@ select_item() { gpaste-client --use-index select "$1" ;}
 delete_item() { gpaste-client --use-index delete "$1" ;}
 
 edit_item() {
+	[ "$1" -eq -1 ] && exit 1
+
 	TmpFile=$(mktemp "/tmp/$Script.XXXX")
 	print_item "$1" > "$TmpFile"
 
@@ -112,6 +116,8 @@ edit_item() {
 }
 
 archive_item() {
+	[ "$1" -eq -1 ] && exit 1
+
 	[ "$HistName" = archive ] && return
 
 	Item=$(print_item "$1")
@@ -131,6 +137,8 @@ toggle_track() {
 }
 
 paste_clip() {
+	[ "$1" -eq -1 ] && exit 1
+
 	AW=$(xdotool getactivewindow)
 	AW=$(xprop -id "$AW" | awk -F\" '/WM_CLASS/{print tolower($4)}')
 	sleep .5
@@ -148,6 +156,8 @@ paste_selection() {
 }
 
 qr_code() {
+	[ "$1" -eq -1 ] && exit 1
+
 	TmpQR=$(mktemp --suffix=.png "/tmp/${Script}_qr.XXXX")
 	print_item "$1" | qrencode -s 10 -d 300 -v 8 -l H -o "$TmpQR"
 
