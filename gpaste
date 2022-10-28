@@ -168,7 +168,10 @@ clear_history() {
 	[ "$HistName" = archive ] &&
 		Confirm=$(printf 'Yes\nNo' | _rofi -p "Clear $HistName?")
 
-	[ ${Confirm:-0:Yes} = 0:Yes ] && { gpaste-client empty; xsel -c ;}
+	[ "${Confirm:-0:Yes}" = 0:Yes ] && {
+		gpaste-client empty; xsel -c
+		gpaste-client switch-history history
+	}
 }
 
 backup_history() {
