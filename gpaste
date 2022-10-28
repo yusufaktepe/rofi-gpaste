@@ -87,7 +87,14 @@ print_item() {
 		sed -e '/./,$!d' -e :a -e '/^\n*$/{$d;N;ba' -e '}'
 }
 
-select_item() { gpaste-client --use-index select "$1" ;}
+select_item() {
+	if [ "$1" -ne -1 ]; then
+		gpaste-client --use-index select "$1"
+	else
+		exit 1
+	fi
+}
+
 delete_item() { gpaste-client --use-index delete "$1" ;}
 
 edit_item() {
@@ -137,8 +144,6 @@ toggle_track() {
 }
 
 paste_clip() {
-	[ "$1" -eq -1 ] && exit 1
-
 	AW=$(xdotool getactivewindow)
 	AW=$(xprop -id "$AW" | awk -F\" '/WM_CLASS/{print tolower($4)}')
 	sleep .5
