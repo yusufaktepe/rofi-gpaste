@@ -73,6 +73,15 @@ usage() {
 # Start the daemon if it's not running
 pidof -q gpaste-daemon || setsid -f gpaste-client daemon >/dev/null 2>&1
 
+dep_check() {
+	for Dep in "$@"; do
+		command -v "$Dep" 1>/dev/null || {
+			printf 'Err: %s\n' "Dependency '$Dep' not met."
+			exit 1
+		}
+	done
+}
+
 print_history() {
 	gpaste-client --oneline |
 		while read -r Item; do
@@ -99,6 +108,11 @@ delete_item() { gpaste-client --use-index delete "$1" ;}
 
 edit_item() {
 	[ "$1" -eq -1 ] && exit 1
+
+	[ -z "$TERMINAL" ] || [ -z "$EDITOR" ] && {
+		printf 'Err: %s\n' "'TERMINAL' or 'EDITOR' environment variable is not set."
+		exit 1
+	}
 
 	TmpFile=$(mktemp "/tmp/$Script.XXXX")
 	print_item "$1" > "$TmpFile"
@@ -144,6 +158,8 @@ toggle_track() {
 }
 
 paste_clip() {
+	dep_check xdotool xprop awk
+
 	AW=$(xdotool getactivewindow)
 	AW=$(xprop -id "$AW" | awk -F\" '/WM_CLASS/{print tolower($4)}')
 	sleep .5
@@ -156,12 +172,16 @@ paste_clip() {
 }
 
 paste_selection() {
+	dep_check xdotool
+
 	sleep .5
 	xdotool type --delay 0 --clearmodifiers -- "$(xsel -o)"
 }
 
 qr_code() {
 	[ "$1" -eq -1 ] && exit 1
+
+	dep_check qrencode
 
 	TmpQR=$(mktemp --suffix=.png "/tmp/${Script}_qr.XXXX")
 	print_item "$1" | qrencode -s 10 -d 300 -v 8 -l H -o "$TmpQR"
