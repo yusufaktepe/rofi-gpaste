@@ -14,12 +14,12 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 ### Dependencies
 - [rofi](https://github.com/davatorium/rofi)
 - [gpaste](https://github.com/Keruspe/GPaste)
+- bash
 - xclip
 - sed
 - coreutils
 - xdotool *
 - xprop *
-- awk *
 - qrencode (for QR code generation)
 - zenity (for save dialog)
 

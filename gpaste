@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 # Rofi frontend for GPaste.
 # Dependencies:
-#   rofi, gpaste, xclip, xdotool, xprop, awk, sed, coreutils, zenity
+#   rofi, gpaste, xclip, xdotool, xprop, sed, coreutils, zenity
 
 # Key bindings
 Kb_Clear='Alt+c'
@@ -156,12 +156,13 @@ toggle_track() {
 }
 
 paste_clip() {
-	dep_check xdotool xprop xclip awk
+	dep_check xdotool xprop xclip
 
 	AW=$(xdotool getactivewindow)
-	AW=$(xprop -id "$AW" | awk -F\" '/WM_CLASS/{print tolower($4)}')
+	IFS=\" read -r _ _ _ WM_CLASS <<< "$(xprop -id "$AW" WM_CLASS)"
+
 	sleep .5
-	case $AW in
+	case ${WM_CLASS,,} in
 		alacritty|kitty|st*|xterm|*-terminal|konsole|terminator|urxvt|*wezterm|zutty)
 			xclip -o -selection c | xclip
 			xdotool key --delay 0 --clearmodifiers Shift+Insert ;;
