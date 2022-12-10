@@ -152,11 +152,7 @@ archive_item() {
 toggle_track() {
 	Status=$(dconf read /org/gnome/GPaste/track-changes)
 
-	if "$Status"; then
-		gpaste-client stop
-	else
-		gpaste-client start
-	fi
+	{ ${Status:-true} && gpaste-client stop ;} || gpaste-client start
 }
 
 paste_clip() {
