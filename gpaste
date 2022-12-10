@@ -1,7 +1,7 @@
 #!/bin/sh
 # Rofi frontend for GPaste.
 # Dependencies:
-#   rofi, gpaste, xsel, xdotool, xprop, awk, sed, coreutils, zenity
+#   rofi, gpaste, xclip, xdotool, xprop, awk, sed, coreutils, zenity
 
 # Key bindings
 Kb_Clear='Alt+c'
@@ -177,7 +177,7 @@ paste_selection() {
 	dep_check xdotool
 
 	sleep .5
-	xdotool type --delay 0 --clearmodifiers -- "$(xsel -o)"
+	xdotool type --delay 0 --clearmodifiers -- "$(xclip -o)"
 }
 
 qr_code() {
@@ -207,7 +207,7 @@ clear_history() {
 		Confirm=$(printf 'Yes\nNo' | _rofi -p "Clear $HistName?")
 
 	[ "${Confirm:-0:Yes}" = 0:Yes ] && {
-		gpaste-client empty; xsel -c
+		gpaste-client empty; printf '' | xclip
 		gpaste-client switch-history history
 	}
 }
@@ -287,11 +287,11 @@ case $1 in
 		menu_histories ;;
 	-p|--paste)
 		[ -z "$2" ] && { printf '%s\n' "Please provide an index [1-9]"; exit 1 ;}
-		print_item $(($2-1)) | xsel; paste_selection ;;
+		print_item $(($2-1)) | xclip; paste_selection ;;
 	-s|--selpaste)
 		paste_selection ;;
 	-S|--seltoclip)
-		xsel -o | gpaste-client ;;
+		xclip -o | gpaste-client ;;
 	-t|--toggle)
 		toggle_track ;;
 	-i|--input)
