@@ -160,14 +160,15 @@ toggle_track() {
 }
 
 paste_clip() {
-	dep_check xdotool xprop awk
+	dep_check xdotool xprop xclip awk
 
 	AW=$(xdotool getactivewindow)
 	AW=$(xprop -id "$AW" | awk -F\" '/WM_CLASS/{print tolower($4)}')
 	sleep .5
 	case $AW in
-		alacritty|kitty|st*|gnome-terminal|konsole|xfce4-terminal|terminator)
-			xdotool key --delay 0 --clearmodifiers Ctrl+Shift+v ;;
+		alacritty|kitty|st*|xterm|*-terminal|konsole|terminator|urxvt|*wezterm|zutty)
+			xclip -o -selection c | xclip
+			xdotool key --delay 0 --clearmodifiers Shift+Insert ;;
 		*)
 			xdotool key --delay 0 --clearmodifiers Ctrl+v ;;
 	esac
