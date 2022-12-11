@@ -114,8 +114,19 @@ check_image() {
 
 	Index=$1; shift
 
+	GpasteDir=${XDG_DATA_HOME:-$HOME/.local/share}/gpaste
+	local Date Epoch Match
+
 	while read -r Line; do
-		[[ $Line =~ ^(\[Image, [0-9]+ x [0-9]+ \(.*:[0-9]+\)])$ ]] && Image=true
+		[[ $Line =~ ^(\[Image, [0-9]+ x [0-9]+ \(.*:[0-9]+\)])$ ]] && {
+			Date=${Line##*(} Date=${Date%%)*}
+			Epoch=$(date -d "$Date" +%s)
+
+			Match="\"Image\" uuid=.*date=\"$Epoch\">"
+			IFS='[]' read -r _ _ ImgFile _ <<< "$(sed -n "/$Match/{n;p;}" "$GpasteDir/$HistName.xml")"
+
+			Image=true
+		}
 		break
 	done <<< "$(print_item "$Index")"
 
@@ -137,13 +148,7 @@ edit_item() {
 	}
 
 	check_image "$1" && {
-		# Image needs to be on clipboard (index 0) to be exported
-		select_item "$1"
-
-		TmpFile=$(mktemp --suffix=.png "/tmp/${Script}_img.XXXX")
-		xclip -selection c -t image/png -o > "$TmpFile"
-
-		xdg-open "$TmpFile" && rm -f "$TmpFile"
+		[ -e "$ImgFile" ] && setsid -f xdg-open "$ImgFile" >/dev/null 2>&1
 		exit
 	}
 
@@ -164,7 +169,7 @@ edit_item() {
 	if [ -z "$(sed 's/^[ \t]*//' "$TmpFile")" ]; then
 		delete_item "$1"
 	else
-		gpaste-client --use-index replace "$1" "$(cat "$TmpFile")"
+		gpaste-client --use-index replace "$1" "$(< "$TmpFile")"
 	fi
 	rm -f "$TmpFile"
 }
@@ -190,7 +195,8 @@ toggle_track() {
 
 paste_clip() {
 	dep_check xdotool xprop xclip
-	check_image 0 --disable Paste
+
+	select_item "$1" && check_image 0
 
 	AW=$(xdotool getactivewindow)
 	IFS=\" read -r _ _ _ WM_CLASS <<< "$(xprop -id "$AW" WM_CLASS)"
@@ -198,7 +204,8 @@ paste_clip() {
 	sleep .5
 	case ${WM_CLASS,,} in
 		alacritty|kitty|st*|xterm|*-terminal|konsole|terminator|urxvt|*wezterm|zutty)
-			xclip -o -selection c | xclip
+			{ [ -n "$ImgFile" ] && xclip -r <<< "$ImgFile" ;} ||
+				xclip -o -selection c | xclip -r
 			xdotool key --delay 0 --clearmodifiers Shift+Insert ;;
 		*)
 			xdotool key --delay 0 --clearmodifiers Ctrl+v ;;
@@ -221,20 +228,20 @@ qr_code() {
 	TmpQR=$(mktemp --suffix=.png "/tmp/${Script}_qr.XXXX")
 	print_item "$1" | qrencode -s 10 -d 300 -v 8 -l H -o "$TmpQR"
 
-	xdg-open "$TmpQR" && rm -f "$TmpQR"
+	xdg-open "$TmpQR" >/dev/null 2>&1 && rm -f "$TmpQR"
 }
 
 save_item() {
 	[ "$1" -eq -1 ] && exit 1
 
 	dep_check zenity
-	check_image "$1" && select_item "$1" && Suffix=.png
+	check_image "$1" && { [ -e "$ImgFile" ] && Suffix=.png || exit ;}
 
 	File=$(zenity --file-selection --filename="$HOME/$Suffix" \
 		--save --confirm-overwrite --title "Save Clip" 2>/dev/null)
 
 	[ -n "$File" ] && {
-		$Image && xclip -selection c -t image/png -o > "$File" && return
+		$Image && cp "$ImgFile" "$File" && return
 		print_item "$1" > "$File"
 	}
 }
@@ -307,7 +314,7 @@ menu() {
 		14) archive_item "$Index"; Index=$Index exec "$0" ;;
 		15) backup_history; Index=$Index exec "$0" ;;
 		16) menu_histories ;;
-		17) select_item "$Index"; paste_clip ;;
+		17) paste_clip "$Index" ;;
 		18) qr_code "$Index" ;;
 		19) save_item "$Index" ;;
 		20) gpaste-client switch-history history; exec "$0" ;;
@@ -325,8 +332,8 @@ case $1 in
 		menu_histories ;;
 	-p|--paste)
 		[ -z "${2##*[!1-9]*}" ] && { printf '%s\n' "Please provide an index [1-9]+"; exit 1 ;}
-		check_image $(($2-1)) --disable Paste
-		print_item $(($2-1)) | xclip; paste_selection ;;
+		HistName=$(gpaste-client get-history)
+		paste_clip $(($2-1)) ;;
 	-s|--selpaste)
 		paste_selection ;;
 	-S|--seltoclip)
