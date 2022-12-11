@@ -3,27 +3,24 @@
 Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 
 > Main window
-> ![gpaste](https://user-images.githubusercontent.com/32964025/109804092-ebba5b80-7c32-11eb-8617-894c9a39b1d0.png)
+> ![gpaste](https://user-images.githubusercontent.com/32964025/206889800-07ca3ea9-46bf-4dee-aa03-a29a20b7c04a.png)
 > History selection
-> ![gpaste_selec-history](https://user-images.githubusercontent.com/32964025/109813460-6f2d7a00-7c3e-11eb-971a-1ed6950d2d01.png)
+> ![gpaste_selec-history](https://user-images.githubusercontent.com/32964025/206890041-5a5cf8d8-ac5d-48ba-93fe-466343b8fadd.png)
 
 ### Features
 - Manage multiple clipboard histories.
 - Edit, delete, paste, archive... clipboard items with keybindings.
+- Display and save images from clipboard history. *(if `images-support` is enabled)*
 
 ### Dependencies
-- [rofi](https://github.com/davatorium/rofi)
-- [gpaste](https://github.com/Keruspe/GPaste)
-- xclip
-- sed
-- coreutils
-- xdotool *
-- xprop *
-- awk *
-- qrencode (for QR code generation)
-- zenity (for save dialog)
-
-\* Only required for automatically typing/pasting.
+- [`rofi`](https://github.com/davatorium/rofi)
+- [`gpaste`](https://github.com/Keruspe/GPaste)
+- `bash`, `coreutils`
+- `sed`
+- `xclip`
+- `xdotool`, `xprop` *(for paste function)*
+- `qrencode` *(for QR code generation)*
+- `zenity` *(for save dialog)*
 
 ### Usage
 
@@ -33,9 +30,9 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 <tr><td> <code>Alt+c</code>       </td> <td> Clear history                                         </td></tr>
 <tr><td> <code>Alt+p</code>       </td> <td> Toggle tracking changes                               </td></tr>
 <tr><td> <code>Alt+d</code>       </td> <td> Delete selected item                                  </td></tr>
-<tr><td> <code>Alt+e</code>       </td> <td> Edit selected item **                                 </td></tr>
-<tr><td> <code>Alt+s</code>       </td> <td> Archive selected item                                 </td></tr>
-<tr><td> <code>Alt+B</code>       </td> <td> Backup current history                                </td></tr>
+<tr><td> <code>Alt+e</code>       </td> <td> Edit selected item* / Display image                   </td></tr>
+<tr><td> <code>Alt+s</code>       </td> <td> Archive selected text item                            </td></tr>
+<tr><td> <code>Alt+Shift+b</code> </td> <td> Backup current history                                </td></tr>
 <tr><td> <code>Alt+h</code>       </td> <td> List and switch histories                             </td></tr>
 <tr><td> <code>Alt+Return</code>  </td> <td> Paste selected item                                   </td></tr>
 <tr><td> <code>Alt+q</code>       </td> <td> Display QR code                                       </td></tr>
@@ -52,7 +49,7 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 </tbody>
 </table>
 
-\** This shortcut assumes that you have set the `TERMINAL` and `EDITOR` environment variables.
+\* This shortcut assumes that you have set the `TERMINAL` and `EDITOR` environment variables.
 
 ---
 

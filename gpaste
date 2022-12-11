@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 # Rofi frontend for GPaste.
 # Dependencies:
-#   rofi, gpaste, xclip, xdotool, xprop, awk, sed, coreutils, zenity
+#   rofi, gpaste, xclip, xdotool, xprop, sed, coreutils, zenity
 
 # Key bindings
 Kb_Clear='Alt+c'
@@ -108,12 +108,48 @@ select_item() {
 
 delete_item() { gpaste-client --use-index delete "$1" ;}
 
+check_image() {
+	Status=$(dconf read /org/gnome/GPaste/images-support)
+	${Status:-false} || return 1
+
+	Index=$1; shift
+
+	GpasteDir=${XDG_DATA_HOME:-$HOME/.local/share}/gpaste
+	local Date Epoch Match
+
+	while read -r Line; do
+		[[ $Line =~ ^(\[Image, [0-9]+ x [0-9]+ \(.*:[0-9]+\)])$ ]] && {
+			Date=${Line##*(} Date=${Date%%)*}
+			Epoch=$(date -d "$Date" +%s)
+
+			Match="\"Image\" uuid=.*date=\"$Epoch\">"
+			IFS='[]' read -r _ _ ImgFile _ <<< "$(sed -n "/$Match/{n;p;}" "$GpasteDir/$HistName.xml")"
+
+			Image=true
+		}
+		break
+	done <<< "$(print_item "$Index")"
+
+	${Image:=false} && {
+		[ "$1" = --disable ] && {
+			printf 'Err: %s\n' "'$2' shortcut is not available for images."
+			exit 1
+		}
+		return 0
+	}
+}
+
 edit_item() {
 	[ "$1" -eq -1 ] && exit 1
 
 	[ -z "$TERMINAL" ] || [ -z "$EDITOR" ] && {
 		printf 'Err: %s\n' "'TERMINAL' or 'EDITOR' environment variable is not set."
 		exit 1
+	}
+
+	check_image "$1" && {
+		[ -e "$ImgFile" ] && setsid -f xdg-open "$ImgFile" >/dev/null 2>&1
+		exit
 	}
 
 	TmpFile=$(mktemp "/tmp/$Script.XXXX")
@@ -133,7 +169,7 @@ edit_item() {
 	if [ -z "$(sed 's/^[ \t]*//' "$TmpFile")" ]; then
 		delete_item "$1"
 	else
-		gpaste-client --use-index replace "$1" "$(cat "$TmpFile")"
+		gpaste-client --use-index replace "$1" "$(< "$TmpFile")"
 	fi
 	rm -f "$TmpFile"
 }
@@ -142,6 +178,8 @@ archive_item() {
 	[ "$1" -eq -1 ] && exit 1
 
 	[ "$HistName" = archive ] && return
+
+	check_image "$1" --disable Archive
 
 	Item=$(print_item "$1")
 	gpaste-client switch-history archive
@@ -156,14 +194,18 @@ toggle_track() {
 }
 
 paste_clip() {
-	dep_check xdotool xprop xclip awk
+	dep_check xdotool xprop xclip
+
+	select_item "$1" && check_image 0
 
 	AW=$(xdotool getactivewindow)
-	AW=$(xprop -id "$AW" | awk -F\" '/WM_CLASS/{print tolower($4)}')
+	IFS=\" read -r _ _ _ WM_CLASS <<< "$(xprop -id "$AW" WM_CLASS)"
+
 	sleep .5
-	case $AW in
+	case ${WM_CLASS,,} in
 		alacritty|kitty|st*|xterm|*-terminal|konsole|terminator|urxvt|*wezterm|zutty)
-			xclip -o -selection c | xclip
+			{ [ -n "$ImgFile" ] && xclip -r <<< "$ImgFile" ;} ||
+				xclip -o -selection c | xclip -r
 			xdotool key --delay 0 --clearmodifiers Shift+Insert ;;
 		*)
 			xdotool key --delay 0 --clearmodifiers Ctrl+v ;;
@@ -171,32 +213,37 @@ paste_clip() {
 }
 
 paste_selection() {
-	dep_check xdotool
+	dep_check xdotool xclip
 
 	sleep .5
-	xdotool type --delay 0 --clearmodifiers -- "$(xclip -o)"
+	xdotool type --delay 0 --clearmodifiers -- "$(xclip -o 2>/dev/null)"
 }
 
 qr_code() {
 	[ "$1" -eq -1 ] && exit 1
 
 	dep_check qrencode
+	check_image "$1" --disable 'QR Code'
 
 	TmpQR=$(mktemp --suffix=.png "/tmp/${Script}_qr.XXXX")
 	print_item "$1" | qrencode -s 10 -d 300 -v 8 -l H -o "$TmpQR"
 
-	xdg-open "$TmpQR" && rm -f "$TmpQR"
+	xdg-open "$TmpQR" >/dev/null 2>&1 && rm -f "$TmpQR"
 }
 
 save_item() {
 	[ "$1" -eq -1 ] && exit 1
 
 	dep_check zenity
+	check_image "$1" && { [ -e "$ImgFile" ] && Suffix=.png || exit ;}
 
-	File=$(zenity --file-selection --filename="$HOME/" \
+	File=$(zenity --file-selection --filename="$HOME/$Suffix" \
 		--save --confirm-overwrite --title "Save Clip" 2>/dev/null)
 
-	[ -n "$File" ] && print_item "$1" > "$File"
+	[ -n "$File" ] && {
+		$Image && cp "$ImgFile" "$File" && return
+		print_item "$1" > "$File"
+	}
 }
 
 clear_history() {
@@ -204,7 +251,8 @@ clear_history() {
 		Confirm=$(printf 'Yes\nNo' | _rofi -p "Clear $HistName?")
 
 	[ "${Confirm:-0:Yes}" = 0:Yes ] && {
-		gpaste-client empty; printf '' | xclip
+		gpaste-client empty
+		for Sel in p c; { printf '' | xclip -selection $Sel ;}
 		gpaste-client switch-history history
 	}
 }
@@ -266,7 +314,7 @@ menu() {
 		14) archive_item "$Index"; Index=$Index exec "$0" ;;
 		15) backup_history; Index=$Index exec "$0" ;;
 		16) menu_histories ;;
-		17) select_item "$Index"; paste_clip ;;
+		17) paste_clip "$Index" ;;
 		18) qr_code "$Index" ;;
 		19) save_item "$Index" ;;
 		20) gpaste-client switch-history history; exec "$0" ;;
@@ -283,8 +331,9 @@ case $1 in
 	-H|--histories)
 		menu_histories ;;
 	-p|--paste)
-		[ -z "$2" ] && { printf '%s\n' "Please provide an index [1-9]"; exit 1 ;}
-		print_item $(($2-1)) | xclip; paste_selection ;;
+		[ -z "${2##*[!1-9]*}" ] && { printf '%s\n' "Please provide an index [1-9]+"; exit 1 ;}
+		HistName=$(gpaste-client get-history)
+		paste_clip $(($2-1)) ;;
 	-s|--selpaste)
 		paste_selection ;;
 	-S|--seltoclip)
