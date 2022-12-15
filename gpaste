@@ -90,25 +90,20 @@ dep_check() {
 }
 
 print_history() {
-	gpaste-client --oneline |
-		while read -r Item; do
-			# remove uuid's
-			printf '%s\n' "${Item#* }"
-		done | sed 's/^[ \t]*//' # Hide leading whitespace
+	# Hide UUIDs and leading whitespace
+	while IFS=: read -r _ Item; do
+		printf '%s\n' "${Item#"${Item%%[![:space:]]*}"}"
+	done < <(gpaste-client --oneline)
 }
 
 print_item() {
-	gpaste-client --use-index get "$1" |
-		# Remove blank lines from the beginning/end
-		sed -e '/./,$!d' -e :a -e '/^\n*$/{$d;N;ba' -e '}'
+	# Remove blank lines from the beginning/end
+	Item=$(gpaste-client --use-index get "$1")
+	printf '%s\n' "${Item#"${Item%%[![:space:]]*}"}"
 }
 
 select_item() {
-	if [ "$1" -ne -1 ]; then
-		gpaste-client --use-index select "$1"
-	else
-		exit 1
-	fi
+	[ "$1" -ne -1 ] && gpaste-client --use-index select "$1" || exit 1
 }
 
 delete_item() { gpaste-client --use-index delete "$1" ;}
@@ -325,7 +320,7 @@ menu() {
 		20) gpaste-client switch-history history; exec "$0" ;;
 		21) gpaste-client switch-history archive; exec "$0" ;;
 		22) gpaste-client ui ;;
-		0)  { [ "$Index" -lt 0 ] && printf '%s' "${Clip#*:}" | gpaste-client ;} || select_item "$Index" ;;
+		0)  { [ "$Index" -lt 0 ] && printf '%s' "${Clip#*:}" | gpaste-client >/dev/null ;} || select_item "$Index" ;;
 		*)  exit $Ret
 	esac
 }
@@ -346,7 +341,7 @@ case $1 in
 	-t|--toggle)
 		toggle_track ;;
 	-i|--input)
-		gpaste-client ;;
+		gpaste-client >/dev/null ;;
 	-h|--help)
 		usage ;;
 	"")
