@@ -108,6 +108,13 @@ select_item() {
 
 delete_item() { gpaste-client --use-index delete "$1" ;}
 
+get_uuid() {
+	local LineIndex=0
+	while IFS=: read -r UUID _; do
+		(( LineIndex++ == $1 )) && break
+	done < <(gpaste-client --oneline)
+}
+
 check_image() {
 	Status=$(dconf read /org/gnome/GPaste/images-support)
 	${Status:-false} || return 1
@@ -115,14 +122,12 @@ check_image() {
 	Index=$1; shift
 
 	GpasteDir=${XDG_DATA_HOME:-$HOME/.local/share}/gpaste
-	local Date Epoch Match
 
 	while read -r Line; do
 		[[ $Line =~ ^(\[Image, [0-9]+ x [0-9]+ \(.*:[0-9]+\)])$ ]] && {
-			Date=${Line##*(} Date=${Date%%)*}
-			Epoch=$(date -d "$Date" +%s)
+			[ -z "$UUID" ] && get_uuid "$Index"
 
-			Match="\"Image\" uuid=.*date=\"$Epoch\">"
+			local Match="\"Image\" uuid=\"$UUID\".*"
 			IFS='[]' read -r _ _ ImgFile _ <<< "$(sed -n "/$Match/{n;p;}" "$GpasteDir/$HistName.xml")"
 
 			Image=true
@@ -147,6 +152,8 @@ edit_item() {
 		exit 1
 	}
 
+	get_uuid "$1" # Use UUID instead of Index (Index may shift during edit)
+
 	check_image "$1" && {
 		[ -e "$ImgFile" ] && setsid -f xdg-open "$ImgFile" >/dev/null 2>&1
 		exit
@@ -167,9 +174,11 @@ edit_item() {
 	gpaste-client start
 
 	if [ -z "$(sed 's/^[ \t]*//' "$TmpFile")" ]; then
-		delete_item "$1"
+		gpaste-client delete "$UUID" 2>/dev/null
 	else
-		gpaste-client --use-index replace "$1" "$(< "$TmpFile")"
+		gpaste-client replace "$UUID" "$(< "$TmpFile")" 2>/dev/null ||
+			# If UUID no longer exists, create a new one instead
+			{ gpaste-client < "$TmpFile" && Index= ;}
 	fi
 	rm -f "$TmpFile"
 }
