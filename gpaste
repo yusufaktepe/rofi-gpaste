@@ -45,6 +45,7 @@ usage() {
 		\r  -s, --selpaste     - Paste selection
 		\r  -S, --seltoclip    - Move selection to clipboard
 		\r  -t, --toggle       - Toggle tracking clipboard changes
+		\r  -d, --debug        - Run script in debug mode
 		\r  -h, --help         - Displays this help information
 		\r  *                  - Pass option(s) to \`gpaste-client\`
 
@@ -92,7 +93,7 @@ dep_check() {
 print_history() {
 	# Hide UUIDs and leading whitespace
 	while IFS=: read -r _ Item; do
-		printf '%s\n' "${Item#"${Item%%[![:space:]]*}"}"
+		printf '%.1000s\n' "${Item#"${Item%%[![:space:]]*}"}"
 	done < <(gpaste-client --oneline)
 }
 
@@ -210,9 +211,10 @@ paste_clip() {
 	AW=$(xdotool getactivewindow)
 	IFS=\" read -r _ _ _ WM_CLASS <<< "$(xprop -id "$AW" WM_CLASS)"
 
+	# Send 'Ctrl+v' or 'Shift+Insert' depending on the active window
 	sleep .5
 	case ${WM_CLASS,,} in
-		alacritty|kitty|st*|xterm|*-terminal|konsole|terminator|urxvt|*wezterm|zutty)
+		alacritty|kitty|st*|*term|*terminal|konsole|terminator|urxvt|zutty)
 			{ [ -n "$ImgFile" ] && xclip -r <<< "$ImgFile" ;} ||
 				xclip -o -selection c | xclip -r
 			xdotool key --delay 0 --clearmodifiers Shift+Insert ;;
@@ -351,6 +353,8 @@ case $1 in
 		toggle_track ;;
 	-i|--input)
 		gpaste-client >/dev/null ;;
+	-d|--debug)
+		shift; set -x; export SHELLOPTS; exec $0 "$1" ;;
 	-h|--help)
 		usage ;;
 	"")
