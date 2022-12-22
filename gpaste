@@ -161,7 +161,7 @@ edit_item() {
 	}
 
 	TmpFile=$(mktemp "/tmp/$Script.XXXX")
-	print_item "$1" > "$TmpFile"
+	Item=$(print_item "$1" | tee "$TmpFile")
 
 	gpaste-client stop # Stop tracking to prevent index from shifting
 
@@ -174,12 +174,17 @@ edit_item() {
 
 	gpaste-client start
 
-	if [ -z "$(sed 's/^[ \t]*//' "$TmpFile")" ]; then
+	TmpFileCont=$(< "$TmpFile")
+	if [ -z "${TmpFileCont#"${TmpFileCont%%[![:space:]]*}"}" ]; then
 		gpaste-client delete "$UUID" 2>/dev/null
-	else
-		gpaste-client replace "$UUID" "$(< "$TmpFile")" 2>/dev/null ||
+	elif [ "$Item" != "$TmpFileCont" ]; then
+		gpaste-client replace "$UUID" -- "$TmpFileCont" 2>/dev/null || {
 			# If UUID no longer exists, create a new one instead
-			{ gpaste-client < "$TmpFile" && Index= ;}
+			Ret=$? # 126: Argument list too long
+			[ $Ret = 126 ] && gpaste-client delete "$UUID" 2>/dev/null
+			gpaste-client < "$TmpFile"
+			Index=
+		}
 	fi
 	rm -f "$TmpFile"
 }
@@ -193,7 +198,7 @@ archive_item() {
 
 	Item=$(print_item "$1")
 	gpaste-client switch-history archive
-	gpaste-client add "$Item"
+	gpaste-client add -- "$Item"
 	gpaste-client switch-history history
 }
 
