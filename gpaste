@@ -93,8 +93,9 @@ dep_check() {
 print_history() {
 	# Hide UUIDs and leading whitespace
 	while IFS=: read -r _ Item; do
+		[ -z "$Item" ] && break
 		printf '%.1000s\n' "${Item#"${Item%%[![:space:]]*}"}"
-	done < <(gpaste-client --oneline)
+	done <<< "$(gpaste-client --oneline)"
 }
 
 print_item() {
@@ -113,7 +114,7 @@ get_uuid() {
 	local LineIndex=0
 	while IFS=: read -r UUID _; do
 		(( LineIndex++ == $1 )) && break
-	done < <(gpaste-client --oneline)
+	done <<< "$(gpaste-client --oneline)"
 }
 
 check_image() {
