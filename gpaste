@@ -45,7 +45,7 @@ usage() {
 		\r  -s, --selpaste     - Paste selection
 		\r  -S, --seltoclip    - Move selection to clipboard
 		\r  -t, --toggle       - Toggle tracking clipboard changes
-		\r  -d, --debug        - Run script in debug mode
+		\r  -d, --debug [OPT]  - Run script in debug mode
 		\r  -h, --help         - Displays this help information
 		\r  *                  - Pass option(s) to \`gpaste-client\`
 
@@ -111,10 +111,7 @@ select_item() {
 delete_item() { gpaste-client --use-index delete "$1" ;}
 
 get_uuid() {
-	local LineIndex=0
-	while IFS=: read -r UUID _; do
-		(( LineIndex++ == $1 )) && break
-	done <<< "$(gpaste-client --oneline)"
+	IFS=: read -r UUID _ <<< "$(gpaste-client --oneline | sed -n $(($1+1))p)"
 }
 
 check_image() {
