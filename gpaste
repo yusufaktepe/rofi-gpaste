@@ -23,6 +23,10 @@ Kb_Switch_Main='Alt+1'
 Kb_Switch_Archive='Alt+2'
 Kb_LaunchGUI='F1'
 
+Editor="$TERMINAL -e $EDITOR" # Editor to use for Edit action
+ImageViewer=xdg-open          # Image Viewer to use for images/qr codes
+PromptPrefix=' '             # Prefix symbol/text for rofi prompt
+
 # Rofi command
 _rofi() {
 	# Increase window width by adding:
@@ -146,15 +150,10 @@ check_image() {
 edit_item() {
 	[ "$1" -eq -1 ] && exit 1
 
-	[ -z "$TERMINAL" ] || [ -z "$EDITOR" ] && {
-		printf 'Err: %s\n' "'TERMINAL' or 'EDITOR' environment variable is not set."
-		exit 1
-	}
-
 	get_uuid "$1" # Use UUID instead of Index (Index may shift during edit)
 
 	check_image "$1" && {
-		[ -e "$ImgFile" ] && setsid -f xdg-open "$ImgFile" >/dev/null 2>&1
+		[ -e "$ImgFile" ] && setsid -f $ImageViewer "$ImgFile" >/dev/null 2>&1
 		exit
 	}
 
@@ -165,9 +164,9 @@ edit_item() {
 
 	# Check if we need a terminal window
 	if [ -t 2 ]; then
-		$EDITOR "$TmpFile"
+		${EDITOR:-$Editor} "$TmpFile"
 	else
-		$TERMINAL -e "$EDITOR" "$TmpFile" >/dev/null 2>&1
+		$Editor "$TmpFile" >/dev/null 2>&1
 	fi
 
 	gpaste-client start
@@ -242,7 +241,7 @@ qr_code() {
 	TmpQR=$(mktemp --suffix=.png "/tmp/${Script}_qr.XXXX")
 	print_item "$1" | qrencode -s 10 -d 300 -v 8 -l H -o "$TmpQR"
 
-	xdg-open "$TmpQR" >/dev/null 2>&1 && rm -f "$TmpQR"
+	$ImageViewer "$TmpQR" >/dev/null 2>&1 && rm -f "$TmpQR"
 }
 
 save_item() {
@@ -278,7 +277,7 @@ backup_history() {
 
 menu_histories() {
 	HistSelected=$(
-		gpaste-client list-histories | _rofi -p ' Histories' \
+		gpaste-client list-histories | _rofi -p "${PromptPrefix}Histories" \
 			-selected-row "${HistIndex:-0}" \
 			-kb-custom-1 "$Kb_Delete" \
 			-kb-custom-2 "$Kb_Hist"
@@ -299,7 +298,7 @@ menu() {
 	HistName=$(gpaste-client get-history)
 
 	Clip=$(
-		print_history | _rofi -p " $HistName" \
+		print_history | _rofi -p "${PromptPrefix}$HistName" \
 			-selected-row "${Index:-0}" \
 			-kb-custom-1 "$Kb_Clear" \
 			-kb-custom-2 "$Kb_Toggle" \
