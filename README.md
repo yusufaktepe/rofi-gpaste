@@ -22,6 +22,9 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 - `qrencode` *(for QR code generation)*
 - `zenity` *(for save dialog)*
 
+### Configuration
+You can override default options by copying [`config.example`](config.example) file to `~/.config/rofi-gpaste.conf`.
+
 ### Usage
 
 <table>
@@ -40,7 +43,7 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 <tr><td> <code>Alt+1</code>       </td> <td> Switch to main clipboard                              </td></tr>
 <tr><td> <code>Alt+2</code>       </td> <td> Switch to clipboard archive                           </td></tr>
 <tr><td> <code>F1</code>          </td> <td> Launch GPaste GUI                                     </td></tr>
-<tr><td> <code> Return</code>     </td> <td> Activate selected item OR add user input to clipboard </td></tr>
+<tr><td> <code>Return</code>     </td> <td> Activate selected item OR add user input to clipboard  </td></tr>
 <tr></tr>
 <tr><th colspan="2"> Histories menu </th></tr>
 <tr><td> <code>Alt+d</code>       </td> <td> Delete selected history                               </td></tr>
@@ -49,13 +52,13 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 </tbody>
 </table>
 
-\* This shortcut assumes that you have set the `TERMINAL` and `EDITOR` environment variables.
+\* This shortcut assumes that you have set the `TERMINAL` and `EDITOR` environment variables unless `Editor` variable is overridden by config.
 
 ---
 
-Run `gpaste -h` to see all options and rofi keybindings.
+Run `rofi-gpaste -h` to see all options and rofi keybindings.
 ```
-Usage: gpaste [OPT]
+Usage: rofi-gpaste [OPT]
 
   -c, --clear        - Clear history
   -H, --histories    - Histories menu
@@ -64,6 +67,7 @@ Usage: gpaste [OPT]
   -s, --selpaste     - Paste selection
   -S, --seltoclip    - Move selection to clipboard
   -t, --toggle       - Toggle tracking clipboard changes
+  -d, --debug [OPT]  - Run script in debug mode
   -h, --help         - Displays this help information
   *                  - Pass option(s) to `gpaste-client`
 

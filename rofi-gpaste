@@ -31,8 +31,11 @@ PromptPrefix=' '             # Prefix symbol/text for rofi prompt
 _rofi() {
 	# Increase window width by adding:
 	#     -theme-str 'window {width: 60%;}'
-	rofi -format 'i:s' -dmenu -i -l 10 "$@"
+	rofi -dmenu -i -l 10 "$@"
 }
+
+ConfigFile=${XDG_CONFIG_HOME:-$HOME/.config}/rofi-gpaste.conf
+[ -f "$ConfigFile" ] && source "$ConfigFile"
 
 Script=${0##*/}
 
@@ -261,9 +264,9 @@ save_item() {
 
 clear_history() {
 	[ "$HistName" = archive ] &&
-		Confirm=$(printf 'Yes\nNo' | _rofi -p "Clear $HistName?")
+		Confirm=$(printf 'Yes\nNo' | _rofi -no-custom -p "Clear $HistName?")
 
-	[ "${Confirm:-0:Yes}" = 0:Yes ] && {
+	[ "${Confirm:-Yes}" = Yes ] && {
 		gpaste-client empty
 		for Sel in p c; { printf '' | xclip -selection $Sel ;}
 		gpaste-client switch-history history
@@ -277,7 +280,8 @@ backup_history() {
 
 menu_histories() {
 	HistSelected=$(
-		gpaste-client list-histories | _rofi -p "${PromptPrefix}Histories" \
+		gpaste-client list-histories | _rofi -format 'i:s' \
+			-p "${PromptPrefix}Histories" \
 			-selected-row "${HistIndex:-0}" \
 			-kb-custom-1 "$Kb_Delete" \
 			-kb-custom-2 "$Kb_Hist"
@@ -298,7 +302,8 @@ menu() {
 	HistName=$(gpaste-client get-history)
 
 	Clip=$(
-		print_history | _rofi -p "${PromptPrefix}$HistName" \
+		print_history | _rofi -format 'i:s' \
+			-p "${PromptPrefix}$HistName" \
 			-selected-row "${Index:-0}" \
 			-kb-custom-1 "$Kb_Clear" \
 			-kb-custom-2 "$Kb_Toggle" \

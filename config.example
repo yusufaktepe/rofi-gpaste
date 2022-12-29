@@ -1,0 +1,36 @@
+#!/hint/bash
+# Configuration file for rofi-gpaste.
+# Uncomment the lines you want to override.
+
+##== Key bindings
+# Kb_Clear='Alt+c'
+# Kb_Toggle='Alt+p'
+# Kb_Delete='Alt+d'
+# Kb_Edit='Alt+e'
+# Kb_Archive='Alt+s'
+# Kb_Hist='Alt+h'
+# Kb_Paste='Alt+Return'
+# Kb_QR='Alt+q'
+# Kb_Save='Alt+o'
+# Kb_Backup='Alt+B'
+# Kb_Switch_Main='Alt+1'
+# Kb_Switch_Archive='Alt+2'
+# Kb_LaunchGUI='F1'
+
+##== Editor to use for Edit action
+# Editor="$TERMINAL -e $EDITOR"
+
+##== Image Viewer to use for images/qr codes
+# ImageViewer=xdg-open
+
+##== Prefix symbol/text for rofi prompt
+# PromptPrefix=' '
+
+##== Custom Rofi command
+## E.g. increase window width by adding:
+##        -theme-str 'window {width: 60%;}'
+
+# _rofi() {
+#	rofi -dmenu -i -l 10 "$@"
+# }
+
