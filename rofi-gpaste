@@ -6,7 +6,7 @@
 # @license: GPL-3.0
 # ---
 # Dependencies:
-#   rofi, gpaste, xclip, xdotool, xprop, sed, coreutils, zenity
+#   rofi, gpaste, xclip, xdotool, sed, coreutils, zenity
 
 # Key bindings
 Kb_Clear='Alt+c'
@@ -209,14 +209,12 @@ toggle_track() {
 }
 
 paste_clip() {
-	dep_check xdotool xprop xclip
+	dep_check xdotool xclip
 
 	select_item "$1" && check_image 0
 
-	AW=$(xdotool getactivewindow)
-	IFS=\" read -r _ _ _ WM_CLASS <<< "$(xprop -id "$AW" WM_CLASS)"
-
 	# Send 'Ctrl+v' or 'Shift+Insert' depending on the active window
+	WM_CLASS=$(xdotool getactivewindow getwindowclassname)
 	sleep .5
 	case ${WM_CLASS,,} in
 		alacritty|kitty|st*|*term|*terminal|konsole|terminator|urxvt|zutty)

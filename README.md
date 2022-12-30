@@ -18,7 +18,7 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 - `bash`, `coreutils`
 - `sed`
 - `xclip`
-- `xdotool`, `xprop` *(for paste function)*
+- `xdotool` *(for paste function)*
 - `qrencode` *(for QR code generation)*
 - `zenity` *(for save dialog)*
 
