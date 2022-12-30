@@ -38,7 +38,7 @@ You can override default options by copying [`config.example`](config.example) f
 <tr><td> <code>Alt+Shift+b</code> </td> <td> Backup current history                                </td></tr>
 <tr><td> <code>Alt+h</code>       </td> <td> List and switch histories                             </td></tr>
 <tr><td> <code>Alt+Return</code>  </td> <td> Paste selected item                                   </td></tr>
-<tr><td> <code>Alt+q</code>       </td> <td> Display QR code                                       </td></tr>
+<tr><td> <code>Alt+q</code>       </td> <td> Display QR code*                                      </td></tr>
 <tr><td> <code>Alt+o</code>       </td> <td> Save selected item to a file                          </td></tr>
 <tr><td> <code>Alt+1</code>       </td> <td> Switch to main clipboard                              </td></tr>
 <tr><td> <code>Alt+2</code>       </td> <td> Switch to clipboard archive                           </td></tr>
@@ -52,7 +52,7 @@ You can override default options by copying [`config.example`](config.example) f
 </tbody>
 </table>
 
-\* This shortcut assumes that you have set the `TERMINAL` and `EDITOR` environment variables unless `Editor` variable is overridden by config.
+\* These shortcuts will use `xdg-open` by default.
 
 ---
 

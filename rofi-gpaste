@@ -23,9 +23,9 @@ Kb_Switch_Main='Alt+1'
 Kb_Switch_Archive='Alt+2'
 Kb_LaunchGUI='F1'
 
-Editor="$TERMINAL -e $EDITOR" # Editor to use for Edit action
-ImageViewer=xdg-open          # Image Viewer to use for images/qr codes
-PromptPrefix=' '             # Prefix symbol/text for rofi prompt
+Editor=xdg-open       # Editor to use for Edit action
+ImageViewer=xdg-open  # Image Viewer to use for images/qr codes
+PromptPrefix=' '     # Prefix symbol/text for rofi prompt
 
 # Rofi command
 _rofi() {
