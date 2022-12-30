@@ -38,6 +38,7 @@ ConfigFile=${XDG_CONFIG_HOME:-$HOME/.config}/rofi-gpaste.conf
 [ -f "$ConfigFile" ] && source "$ConfigFile"
 
 Script=${0##*/}
+GpasteDir=${XDG_DATA_HOME:-$HOME/.local/share}/gpaste
 
 usage() {
 	while read -r Usage; do
@@ -78,6 +79,7 @@ usage() {
 
 		\r    Histories menu
 		\r      - Delete selected history     - $Kb_Delete
+		\r      - Rename selected history     - $Kb_Edit
 		\r      - Return to active history    - $Kb_Hist
 		\r      - Switch to history OR
 		\r        create new one with input   - Return
@@ -126,8 +128,6 @@ check_image() {
 	${Status:-false} || return 1
 
 	Index=$1; shift
-
-	GpasteDir=${XDG_DATA_HOME:-$HOME/.local/share}/gpaste
 
 	while read -r Line; do
 		[[ $Line =~ ^(\[Image, [0-9]+ x [0-9]+ \(.*:[0-9]+\)])$ ]] && {
@@ -276,13 +276,20 @@ backup_history() {
 	gpaste-client backup-history "$BackupName"
 }
 
+rename_history() {
+	HistRename=$(_rofi -p "${PromptPrefix}Rename: $HistSelected ❯" -filter "$HistSelected")
+	[ -n "$HistRename" ] && [ "$HistSelected" != "$HistRename"  ] &&
+		mv "$GpasteDir/$1.xml" "$GpasteDir/$HistRename.xml"
+}
+
 menu_histories() {
 	HistSelected=$(
 		gpaste-client list-histories | _rofi -format 'i:s' \
 			-p "${PromptPrefix}Histories" \
 			-selected-row "${HistIndex:-0}" \
 			-kb-custom-1 "$Kb_Delete" \
-			-kb-custom-2 "$Kb_Hist"
+			-kb-custom-2 "$Kb_Edit" \
+			-kb-custom-3 "$Kb_Hist"
 	)
 	Ret=$?
 	Index=${HistSelected%%:*}
@@ -290,7 +297,8 @@ menu_histories() {
 
 	case $Ret in
 		10) gpaste-client delete-history "$HistSelected"; HistIndex=$Index exec "$0" -H ;;
-		11) exec "$0" ;;
+		11) rename_history "$HistSelected"; HistIndex=$Index exec "$0" -H ;;
+		12) exec "$0" ;;
 		0)  [ -n "$HistSelected" ] && gpaste-client switch-history "$HistSelected"; exec "$0" ;;
 		*)  exit $Ret
 	esac

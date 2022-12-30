@@ -1,4 +1,4 @@
-## rofi-gpaste
+# rofi-gpaste
 
 Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 
@@ -8,11 +8,13 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 > ![gpaste_selec-history](https://user-images.githubusercontent.com/32964025/206890041-5a5cf8d8-ac5d-48ba-93fe-466343b8fadd.png)
 
 ### Features
+
 - Manage multiple clipboard histories.
 - Edit, delete, paste, archive... clipboard items with keybindings.
 - Display and save images from clipboard history. *(if `images-support` is enabled)*
 
 ### Dependencies
+
 - [`rofi`](https://github.com/davatorium/rofi)
 - [`gpaste`](https://github.com/Keruspe/GPaste)
 - `bash`, `coreutils`
@@ -23,41 +25,40 @@ Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 - `zenity` *(for save dialog)*
 
 ### Configuration
+
 You can override default options by copying [`config.example`](config.example) file to `~/.config/rofi-gpaste.conf`.
 
 ### Usage
 
-<table>
-<tbody>
-<tr><th colspan="2"><strong> Shortcuts </strong></th></tr>
-<tr><td> <code>Alt+c</code>       </td> <td> Clear history                                         </td></tr>
-<tr><td> <code>Alt+p</code>       </td> <td> Toggle tracking changes                               </td></tr>
-<tr><td> <code>Alt+d</code>       </td> <td> Delete selected item                                  </td></tr>
-<tr><td> <code>Alt+e</code>       </td> <td> Edit selected item* / Display image                   </td></tr>
-<tr><td> <code>Alt+s</code>       </td> <td> Archive selected text item                            </td></tr>
-<tr><td> <code>Alt+Shift+b</code> </td> <td> Backup current history                                </td></tr>
-<tr><td> <code>Alt+h</code>       </td> <td> List and switch histories                             </td></tr>
-<tr><td> <code>Alt+Return</code>  </td> <td> Paste selected item                                   </td></tr>
-<tr><td> <code>Alt+q</code>       </td> <td> Display QR code*                                      </td></tr>
-<tr><td> <code>Alt+o</code>       </td> <td> Save selected item to a file                          </td></tr>
-<tr><td> <code>Alt+1</code>       </td> <td> Switch to main clipboard                              </td></tr>
-<tr><td> <code>Alt+2</code>       </td> <td> Switch to clipboard archive                           </td></tr>
-<tr><td> <code>F1</code>          </td> <td> Launch GPaste GUI                                     </td></tr>
-<tr><td> <code>Return</code>     </td> <td> Activate selected item OR add user input to clipboard  </td></tr>
-<tr></tr>
-<tr><th colspan="2"> Histories menu </th></tr>
-<tr><td> <code>Alt+d</code>       </td> <td> Delete selected history                               </td></tr>
-<tr><td> <code>Alt+h</code>       </td> <td> Return to active history                              </td></tr>
-<tr><td> <code>Return</code>      </td> <td> Switch to history OR create new one with input        </td></tr>
-</tbody>
-</table>
+Key binding                                      | Action
+------------------------------------------------ | ------
+<kbd>Alt</kbd> + <kbd>c</kbd>                    | Clear history
+<kbd>Alt</kbd> + <kbd>p</kbd>                    | Toggle tracking changes
+<kbd>Alt</kbd> + <kbd>d</kbd>                    | Delete selected item
+<kbd>Alt</kbd> + <kbd>e</kbd>                    | Edit selected item[^1] / Display image
+<kbd>Alt</kbd> + <kbd>s</kbd>                    | Archive selected text item
+<kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>b</kbd> | Backup current history
+<kbd>Alt</kbd> + <kbd>h</kbd>                    | List and switch histories
+<kbd>Alt</kbd> + <kbd>Return</kbd>               | Paste selected item
+<kbd>Alt</kbd> + <kbd>q</kbd>                    | Display QR code[^1]
+<kbd>Alt</kbd> + <kbd>o</kbd>                    | Save selected item to a file
+<kbd>Alt</kbd> + <kbd>1</kbd>                    | Switch to main clipboard
+<kbd>Alt</kbd> + <kbd>2</kbd>                    | Switch to clipboard archive
+<kbd>F1</kbd>                                    | Launch GPaste GUI
+<kbd>Return</kbd>                                | Activate selected item OR add user input to clipboard
+*🡾 Histories menu*                               |
+<kbd>Alt</kbd> + <kbd>d</kbd>                    | Delete selected history
+<kbd>Alt</kbd> + <kbd>e</kbd>                    | Rename selected history
+<kbd>Alt</kbd> + <kbd>h</kbd>                    | Return to active history
+<kbd>Return</kbd>                                | Switch to history OR create new one with input
 
-\* These shortcuts will use `xdg-open` by default.
+[^1]: These shortcuts will use `xdg-open` by default.
 
 ---
 
 Run `rofi-gpaste -h` to see all options and rofi keybindings.
-```
+
+```text
 Usage: rofi-gpaste [OPT]
 
   -c, --clear        - Clear history
@@ -73,4 +74,3 @@ Usage: rofi-gpaste [OPT]
 
  If no option is given, rofi menu is displayed.
 ```
-
