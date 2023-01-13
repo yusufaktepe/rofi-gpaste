@@ -130,18 +130,11 @@ check_image() {
 
 	Index=$1; shift
 
-	while read -r Line; do
-		[[ $Line =~ ^(\[Image, [0-9]+ x [0-9]+ \(.*:[0-9]+\)])$ ]] && {
-			[ -z "$UUID" ] && get_uuid "$Index"
-			[ -z "$HistName" ] && HistName=$(gpaste-client get-history)
-
-			local Match="\"Image\" uuid=\"$UUID\".*"
-			IFS='[]' read -r _ _ ImgFile _ <<< "$(sed -n "/$Match/{n;p;}" "$GpasteDir/$HistName.xml")"
-
-			Image=true
-		}
-		break
-	done <<< "$(print_item "$Index")"
+	read -r Line <<< "$(print_item "$Index")"
+	[[ $Line =~ ^(\[Image, [0-9]+ x [0-9]+ \(.*:[0-9]+\)])$ ]] && {
+		ImgFile=$(gpaste-client --use-index --raw get "$Index")
+		Image=true
+	}
 
 	${Image:=false} && {
 		[ "$1" = --disable ] && {
@@ -155,12 +148,12 @@ check_image() {
 edit_item() {
 	[ "$1" -eq -1 ] && exit 1
 
-	get_uuid "$1" # Use UUID instead of Index (Index may shift during edit)
-
 	check_image "$1" && {
 		[ -e "$ImgFile" ] && setsid -f $ImageViewer "$ImgFile" >/dev/null 2>&1
 		exit
 	}
+
+	get_uuid "$1" # Use UUID instead of Index (Index may shift during edit)
 
 	TmpFile=$(mktemp "/tmp/$Script.XXXX")
 	Item=$(print_item "$1" | tee "$TmpFile")
@@ -216,6 +209,7 @@ paste_clip() {
 	item select "$1" && check_image 0
 
 	# Send 'Ctrl+v' or 'Shift+Insert' depending on the active window
+	# Because `xdotool type` is unreliable and slow
 	WM_CLASS=$(xdotool getactivewindow getwindowclassname)
 
 	case ${WM_CLASS,,} in
