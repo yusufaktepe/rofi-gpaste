@@ -64,11 +64,12 @@ Usage: rofi-gpaste [OPT]
   -c, --clear        - Clear history
   -H, --histories    - Histories menu
   -i, --input        - Read stdin into clipboard
+  -d, --delete [1-9] - Delete clipboard item by index
   -p, --paste [1-9]  - Paste clipboard item by index
   -s, --selpaste     - Paste selection
   -S, --seltoclip    - Move selection to clipboard
   -t, --toggle       - Toggle tracking clipboard changes
-  -d, --debug [OPT]  - Run script in debug mode
+  -D, --debug [OPT]  - Run script in debug mode
   -h, --help         - Displays this help information
   *                  - Pass option(s) to `gpaste-client`
 

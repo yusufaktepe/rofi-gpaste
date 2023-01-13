@@ -49,11 +49,12 @@ usage() {
 		\r  -c, --clear        - Clear history
 		\r  -H, --histories    - Histories menu
 		\r  -i, --input        - Read stdin into clipboard
+		\r  -d, --delete [1-9] - Delete clipboard item by index
 		\r  -p, --paste [1-9]  - Paste clipboard item by index
 		\r  -s, --selpaste     - Paste selection
 		\r  -S, --seltoclip    - Move selection to clipboard
 		\r  -t, --toggle       - Toggle tracking clipboard changes
-		\r  -d, --debug [OPT]  - Run script in debug mode
+		\r  -D, --debug [OPT]  - Run script in debug mode
 		\r  -h, --help         - Displays this help information
 		\r  *                  - Pass option(s) to \`gpaste-client\`
 
@@ -113,11 +114,11 @@ print_item() {
 	printf '%s\n' "${Item#"${Item%%[![:space:]]*}"}"
 }
 
-select_item() {
-	[ "$1" -ne -1 ] && gpaste-client --use-index select "$1" || exit 1
+item() {
+	local Action=$1; shift
+	[ "$1" -eq -1 ] && exit 1
+	gpaste-client --use-index "$Action" "$@" 2>/dev/null
 }
-
-delete_item() { gpaste-client --use-index delete "$1" ;}
 
 get_uuid() {
 	IFS=: read -r UUID _ <<< "$(gpaste-client --oneline | sed -n $(($1+1))p)"
@@ -132,6 +133,7 @@ check_image() {
 	while read -r Line; do
 		[[ $Line =~ ^(\[Image, [0-9]+ x [0-9]+ \(.*:[0-9]+\)])$ ]] && {
 			[ -z "$UUID" ] && get_uuid "$Index"
+			[ -z "$HistName" ] && HistName=$(gpaste-client get-history)
 
 			local Match="\"Image\" uuid=\"$UUID\".*"
 			IFS='[]' read -r _ _ ImgFile _ <<< "$(sed -n "/$Match/{n;p;}" "$GpasteDir/$HistName.xml")"
@@ -211,11 +213,11 @@ toggle_track() {
 paste_clip() {
 	dep_check xdotool xclip
 
-	select_item "$1" && check_image 0
+	item select "$1" && check_image 0
 
 	# Send 'Ctrl+v' or 'Shift+Insert' depending on the active window
 	WM_CLASS=$(xdotool getactivewindow getwindowclassname)
-	sleep .5
+
 	case ${WM_CLASS,,} in
 		alacritty|kitty|st*|*term|*terminal|konsole|terminator|urxvt|zutty)
 			{ [ -n "$ImgFile" ] && xclip -r <<< "$ImgFile" ;} ||
@@ -333,7 +335,7 @@ menu() {
 	case $Ret in
 		10) clear_history ;;
 		11) toggle_track ;;
-		12) delete_item "$Index"; Index=$Index exec "$0" ;;
+		12) item delete "$Index"; Index=$Index exec "$0" ;;
 		13) edit_item "$Index"; Index=$Index exec "$0" ;;
 		14) archive_item "$Index"; Index=$Index exec "$0" ;;
 		15) backup_history; Index=$Index exec "$0" ;;
@@ -344,9 +346,16 @@ menu() {
 		20) gpaste-client switch-history history; exec "$0" ;;
 		21) gpaste-client switch-history archive; exec "$0" ;;
 		22) gpaste-client ui ;;
-		0)  { [ "$Index" -lt 0 ] && printf '%s' "${Clip#*:}" | gpaste-client >/dev/null ;} || select_item "$Index" ;;
+		0)  { [ "$Index" -lt 0 ] && printf '%s' "${Clip#*:}" | gpaste-client >/dev/null ;} || item select "$Index" ;;
 		*)  exit $Ret
 	esac
+}
+
+is_index() {
+	[ -n "${1##*[!1-9]*}" ] || {
+		printf '%s\n' "Please provide an index [1-9]+"
+		exit 1
+	}
 }
 
 case $1 in
@@ -354,10 +363,10 @@ case $1 in
 		clear_history ;;
 	-H|--histories)
 		menu_histories ;;
+	-d|--delete)
+		is_index "$2" && item delete $(($2-1)) ;;
 	-p|--paste)
-		[ -z "${2##*[!1-9]*}" ] && { printf '%s\n' "Please provide an index [1-9]+"; exit 1 ;}
-		HistName=$(gpaste-client get-history)
-		paste_clip $(($2-1)) ;;
+		is_index "$2" && paste_clip $(($2-1)) ;;
 	-s|--selpaste)
 		paste_selection ;;
 	-S|--seltoclip)
@@ -366,8 +375,8 @@ case $1 in
 		toggle_track ;;
 	-i|--input)
 		gpaste-client >/dev/null ;;
-	-d|--debug)
-		shift; set -x; export SHELLOPTS; exec $0 "$1" ;;
+	-D|--debug)
+		shift; set -x; export SHELLOPTS; exec $0 "$@" ;;
 	-h|--help)
 		usage ;;
 	"")
