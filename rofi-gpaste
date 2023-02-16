@@ -262,7 +262,7 @@ clear_history() {
 
 	[ "${Confirm:-Yes}" = Yes ] && {
 		gpaste-client empty
-		for Sel in p c; { printf '' | xclip -selection $Sel ;}
+		for Sel in p c; do printf '' | xclip -selection $Sel; done
 		gpaste-client switch-history history
 	}
 }
@@ -340,7 +340,7 @@ menu() {
 		20) gpaste-client switch-history history; exec "$0" ;;
 		21) gpaste-client switch-history archive; exec "$0" ;;
 		22) gpaste-client ui ;;
-		0)  { [ "$Index" -lt 0 ] && printf '%s' "${Clip#*:}" | gpaste-client >/dev/null ;} || item select "$Index" ;;
+		0)  { [ "$Index" -lt 0 ] && printf '%s' "${Clip#*:}" | gpaste-client ;} || item select "$Index" ;;
 		*)  exit $Ret
 	esac
 }
