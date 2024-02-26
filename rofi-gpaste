@@ -301,7 +301,8 @@ menu_histories() {
 }
 
 menu() {
-	HistName=$(gpaste-client get-history)
+	HistName=$(dconf read /org/gnome/GPaste/history-name)
+	HistName=${HistName//\'}
 
 	Clip=$(
 		print_history | _rofi -format 'i:s' \
