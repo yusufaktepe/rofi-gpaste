@@ -2,10 +2,7 @@
 
 Rofi frontend for [GPaste](https://github.com/Keruspe/GPaste) clipboard manager.
 
-> Main window
-> ![gpaste](https://user-images.githubusercontent.com/32964025/206889800-07ca3ea9-46bf-4dee-aa03-a29a20b7c04a.png)
-> History selection
-> ![gpaste_selec-history](https://user-images.githubusercontent.com/32964025/206890041-5a5cf8d8-ac5d-48ba-93fe-466343b8fadd.png)
+![rofi-gpaste](https://github.com/yusufaktepe/rofi-gpaste/assets/32964025/5407f386-a762-467a-a34d-6803eee28860)
 
 ### Features
 
@@ -36,7 +33,7 @@ Key binding                                      | Action
 <kbd>Alt</kbd> + <kbd>p</kbd>                    | Toggle tracking changes
 <kbd>Alt</kbd> + <kbd>d</kbd>                    | Delete selected item
 <kbd>Alt</kbd> + <kbd>e</kbd>                    | Edit selected item[^1] / Display image
-<kbd>Alt</kbd> + <kbd>s</kbd>                    | Archive selected text item
+<kbd>Alt</kbd> + <kbd>s</kbd>                    | (un)Archive selected text item
 <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>b</kbd> | Backup current history
 <kbd>Alt</kbd> + <kbd>h</kbd>                    | List and switch histories
 <kbd>Alt</kbd> + <kbd>Return</kbd>               | Paste selected item

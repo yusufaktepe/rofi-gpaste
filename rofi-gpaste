@@ -35,6 +35,7 @@ _rofi() {
 }
 
 ConfigFile=${XDG_CONFIG_HOME:-$HOME/.config}/rofi-gpaste.conf
+# shellcheck source=/dev/null
 [ -f "$ConfigFile" ] && source "$ConfigFile"
 
 Script=${0##*/}
@@ -131,7 +132,8 @@ check_image() {
 	Index=$1; shift
 
 	read -r Line <<< "$(print_item "$Index")"
-	[[ $Line =~ ^(\[Image, [0-9]+ x [0-9]+ \(.*:[0-9]+\)])$ ]] && {
+	local ImgRegex="\[Image, [0-9]+ x [0-9]+ \(.*:[0-9]+\)]"
+	[[ $Line =~ ^($ImgRegex)$ ]] && {
 		ImgFile=$(gpaste-client --use-index --raw get "$Index")
 		Image=true
 	}
@@ -273,13 +275,13 @@ clear_history() {
 }
 
 backup_history() {
-	BackupName=${HistName}_$(date +%Y-%m-%d_%H-%M-%S)
-	gpaste-client backup-history "$BackupName"
+	printf -v Date '%(%Y-%m-%d_%H-%M-%S)T'
+	gpaste-client backup-history "${HistName}_${Date}"
 }
 
 rename_history() {
 	HistRename=$(_rofi -p "${PromptPrefix}Rename: $HistSelected ❯" -filter "$HistSelected")
-	[ -n "$HistRename" ] && [ "$HistSelected" != "$HistRename"  ] &&
+	[ -n "$HistRename" ] && [ "$HistSelected" != "$HistRename" ] &&
 		mv "$GpasteDir/$1.xml" "$GpasteDir/$HistRename.xml"
 }
 
