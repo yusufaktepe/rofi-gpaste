@@ -187,11 +187,16 @@ edit_item() {
 archive_item() {
 	[ "$1" -eq -1 ] && exit 1
 
-	[ "$HistName" = archive ] && return
-
 	check_image "$1" --disable Archive
 
 	Item=$(print_item "$1")
+
+	[ "$HistName" = archive ] && {
+		gpaste-client switch-history history
+		gpaste-client add -- "$Item"
+		return
+	}
+
 	gpaste-client switch-history archive
 	gpaste-client add -- "$Item"
 	gpaste-client switch-history history
