@@ -292,7 +292,10 @@ menu_histories() {
 	HistSelected=${HistSelected#*:}
 
 	case $Ret in
-		10) gpaste-client delete-history "$HistSelected"; HistIndex=$Index exec "$0" -H ;;
+		10) # shellcheck disable=SC2015
+			[[ $HistSelected =~ ^(history|archive)$ ]] && : ||
+				gpaste-client delete-history "$HistSelected"
+			HistIndex=$Index exec "$0" -H ;;
 		11) rename_history "$HistSelected"; HistIndex=$Index exec "$0" -H ;;
 		12) exec "$0" ;;
 		0)  [ -n "$HistSelected" ] && gpaste-client switch-history "$HistSelected"; exec "$0" ;;
