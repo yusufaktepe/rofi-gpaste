@@ -47,17 +47,17 @@ usage() {
 	done <<-EOF
 		Usage: $Script [OPT]
 
-		\r  -c, --clear        - Clear history
-		\r  -H, --histories    - Histories menu
-		\r  -i, --input        - Read stdin into clipboard
-		\r  -d, --delete [1-9] - Delete clipboard item by index
-		\r  -p, --paste [1-9]  - Paste clipboard item by index
-		\r  -s, --selpaste     - Paste selection
-		\r  -S, --seltoclip    - Move selection to clipboard
-		\r  -t, --toggle       - Toggle tracking clipboard changes
-		\r  -D, --debug [OPT]  - Run script in debug mode
-		\r  -h, --help         - Displays this help information
-		\r  *                  - Pass option(s) to \`gpaste-client\`
+		\r  -c, --clear            - Clear history
+		\r  -H, --histories [NAME] - Histories menu / sets initial history with NAME
+		\r  -i, --input            - Read stdin into clipboard
+		\r  -d, --delete [1-9]     - Delete clipboard item by index
+		\r  -p, --paste [1-9]      - Paste clipboard item by index
+		\r  -s, --selpaste         - Paste selection
+		\r  -S, --seltoclip        - Move selection to clipboard
+		\r  -t, --toggle           - Toggle tracking clipboard changes
+		\r  -D, --debug [OPT]      - Run script in debug mode
+		\r  -h, --help             - Displays this help information
+		\r  *                      - Pass option(s) to \`gpaste-client\`
 
 		\r If no option is given, rofi menu is displayed.
 
@@ -366,7 +366,7 @@ case $1 in
 	-c|--clear)
 		clear_history ;;
 	-H|--histories)
-		menu_histories ;;
+		{ [ -n "$2" ] && gpaste-client switch-history "$2" && menu ;} || menu_histories ;;
 	-d|--delete)
 		is_index "$2" && item delete $(($2-1)) ;;
 	-p|--paste)
