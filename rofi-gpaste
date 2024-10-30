@@ -366,7 +366,7 @@ case $1 in
 	-c|--clear)
 		clear_history ;;
 	-H|--histories)
-		{ [ -n "$2" ] && gpaste-client switch-history "$2" && menu ;} || menu_histories ;;
+		if [ -n "$2" ]; then gpaste-client switch-history "$2" && menu; else menu_histories; fi ;;
 	-d|--delete)
 		is_index "$2" && item delete $(($2-1)) ;;
 	-p|--paste)
