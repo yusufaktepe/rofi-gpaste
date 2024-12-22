@@ -276,6 +276,7 @@ clear_history() {
 
 backup_history() {
 	printf -v Date '%(%Y-%m-%d_%H-%M-%S)T'
+	[[ ${HistName#*_} =~ ^([1-9]+.*-[0-9]+)$ ]] && HistName=${HistName%%_*}
 	gpaste-client backup-history "${HistName}_${Date}"
 }
 
