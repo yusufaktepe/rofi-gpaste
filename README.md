@@ -41,6 +41,7 @@ Key binding                                      | Action
 <kbd>Alt</kbd> + <kbd>o</kbd>                    | Save selected item to a file
 <kbd>Alt</kbd> + <kbd>1</kbd>                    | Switch to main clipboard
 <kbd>Alt</kbd> + <kbd>2</kbd>                    | Switch to clipboard archive
+<kbd>Alt</kbd> + <kbd>m</kbd>                    | Activate multi-select
 <kbd>F1</kbd>                                    | Launch GPaste GUI
 <kbd>Return</kbd>                                | Activate selected item OR add user input to clipboard
 *🡾 Histories menu*                               |
@@ -48,6 +49,10 @@ Key binding                                      | Action
 <kbd>Alt</kbd> + <kbd>e</kbd>                    | Rename selected history
 <kbd>Alt</kbd> + <kbd>h</kbd>                    | Return to active history
 <kbd>Return</kbd>                                | Switch to history OR create new one with input
+*🡾 Multi-select menu*                            |
+<kbd>Alt</kbd> + <kbd>d</kbd>                    | Delete selected items
+<kbd>Alt</kbd> + <kbd>j</kbd>                    | Join selected items
+<kbd>Alt</kbd> + <kbd>m</kbd>                    | Return to active history
 
 [^1]: These shortcuts will use `xdg-open` by default.
 
@@ -61,6 +66,7 @@ Usage: rofi-gpaste [OPT]
   -c, --clear        - Clear history
   -H, --histories    - Histories menu
   -i, --input        - Read stdin into clipboard
+  -o; --out [1-9]    - Print item to stdout
   -d, --delete [1-9] - Delete clipboard item by index
   -p, --paste [1-9]  - Paste clipboard item by index
   -s, --selpaste     - Paste selection

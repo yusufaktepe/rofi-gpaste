@@ -22,10 +22,14 @@ Kb_Backup='Alt+B'
 Kb_Switch_Main='Alt+1'
 Kb_Switch_Archive='Alt+2'
 Kb_LaunchGUI='F1'
+Kb_MultiSelect='Alt+m'
+Kb_Join='Alt+j'
 
 Editor=xdg-open       # Editor to use for Edit action
 ImageViewer=xdg-open  # Image Viewer to use for images/qr codes
 PromptPrefix=' '     # Prefix symbol/text for rofi prompt
+BallotSelected='☑ '   # Symbol for selected item in multi-select mode
+BallotUnselected='☐ ' # Symbol for unselected item in multi-select mode
 
 # Rofi command
 _rofi() {
@@ -50,6 +54,7 @@ usage() {
 		\r  -c, --clear            - Clear history
 		\r  -H, --histories [NAME] - Histories menu / sets initial history with NAME
 		\r  -i, --input            - Read stdin into clipboard
+		\r  -o; --out [1-9]        - Print item to stdout
 		\r  -d, --delete [1-9]     - Delete clipboard item by index
 		\r  -p, --paste [1-9]      - Paste clipboard item by index
 		\r  -s, --selpaste         - Paste selection
@@ -74,10 +79,10 @@ usage() {
 		\r    - Save selected item to a file  - $Kb_Save
 		\r    - Switch to main clipboard      - $Kb_Switch_Main
 		\r    - Switch to clipboard archive   - $Kb_Switch_Archive
+		\r    - Activate multi-select         - $Kb_MultiSelect
 		\r    - Launch GPaste GUI             - $Kb_LaunchGUI
 		\r    - Activate selected item OR
 		\r      add user input to clipboard   - Return
-		\r
 
 		\r    Histories menu
 		\r      - Delete selected history     - $Kb_Delete
@@ -86,6 +91,10 @@ usage() {
 		\r      - Switch to history OR
 		\r        create new one with input   - Return
 
+		\r    Multi-select menu
+		\r      - Delete selected items       - $Kb_Delete
+		\r      - Join selected items         - $Kb_Join
+		\r      - Return to active history    - $Kb_MultiSelect
 	EOF
 }
 
@@ -101,28 +110,25 @@ dep_check() {
 	done
 }
 
+parse_history() {
+	while IFS=: read -r UUID Item; do
+		[ -z "$Item" ] && break
+		UUIDs+=("$UUID")
+		Items+=("$Item")
+	done <<< "$(gpaste-client --oneline)"
+}
+
 print_history() {
-	# Hide UUIDs and leading whitespace
-	while IFS=: read -r _ Item; do
+	for Item in "${Items[@]}"; do
 		[ -z "$Item" ] && break
 		printf '%.1000s\n' "${Item#"${Item%%[![:space:]]*}"}"
-	done <<< "$(gpaste-client --oneline)"
+	done
 }
 
 print_item() {
 	# Remove blank lines from the beginning/end
 	Item=$(gpaste-client --use-index get "$1")
 	printf '%s\n' "${Item#"${Item%%[![:space:]]*}"}"
-}
-
-item() {
-	local Action=$1; shift
-	[ "$1" -eq -1 ] && exit 1
-	gpaste-client --use-index "$Action" "$@" 2>/dev/null
-}
-
-get_uuid() {
-	IFS=: read -r UUID _ <<< "$(gpaste-client --oneline | sed -n $(($1+1))p)"
 }
 
 check_image() {
@@ -155,8 +161,6 @@ edit_item() {
 		exit
 	}
 
-	get_uuid "$1" # Use UUID instead of Index (Index may shift during edit)
-
 	TmpFile=$(mktemp "/tmp/$Script.XXXX")
 	Item=$(print_item "$1" | tee "$TmpFile")
 
@@ -172,6 +176,7 @@ edit_item() {
 	gpaste-client start
 
 	TmpFileCont=$(< "$TmpFile")
+	# Use UUID instead of Index (Index may shift during edit)
 	if [ -z "${TmpFileCont#"${TmpFileCont%%[![:space:]]*}"}" ]; then
 		gpaste-client delete "$UUID" 2>/dev/null
 	elif [ "$Item" != "$TmpFileCont" ]; then
@@ -213,7 +218,7 @@ toggle_track() {
 paste_clip() {
 	dep_check xdotool xclip
 
-	item select "$1" && check_image 0
+	gpaste-client --use-index select "$1" && check_image 0
 
 	# Send 'Ctrl+v' or 'Shift+Insert' depending on the active window
 	# Because `xdotool type` is unreliable and slow
@@ -311,9 +316,39 @@ menu_histories() {
 	esac
 }
 
+multi_select() {
+	Clip=$(
+		print_history | _rofi -format 'i:s' -multi-select \
+			-ballot-selected-str "$BallotSelected" \
+			-ballot-unselected-str "$BallotUnselected" \
+			-p "${PromptPrefix}${HistName}[multi-select]" \
+			-selected-row "${Index:-0}" \
+			-kb-custom-1 "$Kb_Delete" \
+			-kb-custom-2 "$Kb_Join" \
+			-kb-custom-3 "$Kb_MultiSelect"
+	)
+	Ret=$?
+
+	while IFS=: read -r Index Clip; do
+		SelIndex+=("$Index")
+		SelUUID+=("${UUIDs[$Index]}")
+	done <<< "$Clip"
+
+	[ -z "${SelIndex[0]}" ] && exit
+
+	case $Ret in
+		10) for i in "${SelUUID[@]}"; do gpaste-client delete "$i"; done; exec "$0" ;;
+		11) for i in "${SelIndex[@]}"; do print_item "$i"; done | gpaste-client ; exec "$0" ;;
+		12) Index=${SelIndex[-1]} exec "$0" ;;
+		0)  gpaste-client select "${SelUUID[-1]}" ;;
+		*)  exit $Ret
+	esac
+}
+
 menu() {
 	HistName=$(gpaste-client get-history)
 
+	parse_history
 	Clip=$(
 		print_history | _rofi -format 'i:s' \
 			-p "${PromptPrefix}$HistName" \
@@ -330,17 +365,19 @@ menu() {
 			-kb-custom-10 "$Kb_Save" \
 			-kb-custom-11 "$Kb_Switch_Main" \
 			-kb-custom-12 "$Kb_Switch_Archive" \
-			-kb-custom-13 "$Kb_LaunchGUI"
+			-kb-custom-13 "$Kb_LaunchGUI" \
+			-kb-custom-14 "$Kb_MultiSelect"
 	)
 	Ret=$?
 	Index=${Clip%%:*}
+	UUID=${UUIDs[$Index]}
 
 	[ -z "$Index" ] && exit
 
 	case $Ret in
 		10) clear_history ;;
 		11) toggle_track ;;
-		12) item delete "$Index"; Index=$Index exec "$0" ;;
+		12) gpaste-client delete "$UUID"; Index=$Index exec "$0" ;;
 		13) edit_item "$Index"; Index=$Index exec "$0" ;;
 		14) archive_item "$Index"; Index=$Index exec "$0" ;;
 		15) backup_history; Index=$Index exec "$0" ;;
@@ -351,7 +388,8 @@ menu() {
 		20) gpaste-client switch-history history; exec "$0" ;;
 		21) gpaste-client switch-history archive; exec "$0" ;;
 		22) gpaste-client ui ;;
-		0)  { [ "$Index" -lt 0 ] && printf '%s' "${Clip#*:}" | gpaste-client ;} || item select "$Index" ;;
+		23) [ ${#UUIDs[@]} -gt 1 ] && multi_select ;;
+		0)  { [ "$Index" -lt 0 ] && printf '%s' "${Clip#*:}" | gpaste-client ;} || gpaste-client select "$UUID" ;;
 		*)  exit $Ret
 	esac
 }
@@ -369,7 +407,7 @@ case $1 in
 	-H|--histories)
 		if [ -n "$2" ]; then gpaste-client switch-history "$2" && menu; else menu_histories; fi ;;
 	-d|--delete)
-		is_index "$2" && item delete $(($2-1)) ;;
+		is_index "$2" && gpaste-client --use-index delete $(($2-1)) ;;
 	-p|--paste)
 		is_index "$2" && paste_clip $(($2-1)) ;;
 	-s|--selpaste)
@@ -380,6 +418,8 @@ case $1 in
 		toggle_track ;;
 	-i|--input)
 		gpaste-client >/dev/null ;;
+	-o|--out)
+		is_index "$2" && gpaste-client --use-index get $(($2-1)) ;;
 	-D|--debug)
 		shift; set -x; export SHELLOPTS; exec $0 "$@" ;;
 	-h|--help)
