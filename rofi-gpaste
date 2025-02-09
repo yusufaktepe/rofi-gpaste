@@ -31,6 +31,12 @@ PromptPrefix=' '     # Prefix symbol/text for rofi prompt
 BallotSelected='☑ '   # Symbol for selected item in multi-select mode
 BallotUnselected='☐ ' # Symbol for unselected item in multi-select mode
 
+# When `DeleteEmpty` is `true`, entries containing only whitespace
+# (spaces, tabs) are automatically deleted.
+# * Ideally, the 'Trim items' setting in GPaste should handle this, but
+#   that setting also removes leading/trailing new lines from non-empty entries.
+DeleteEmpty=true
+
 # Rofi command
 _rofi() {
 	# Increase window width by adding:
@@ -112,7 +118,7 @@ dep_check() {
 
 parse_history() {
 	while IFS=: read -r UUID Item; do
-		[ -z "${Item#"${Item%%[![:space:]]*}"}" ] && {
+		${DeleteEmpty:-:} && [ -z "${Item#"${Item%%[![:space:]]*}"}" ] && {
 			gpaste-client delete "$UUID" 2>/dev/null &
 			continue
 		}
