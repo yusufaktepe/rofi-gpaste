@@ -136,7 +136,7 @@ print_history() {
 print_item() {
 	# Remove blank lines from the beginning/end
 	Item=$(gpaste-client get "$1")
-	printf '%s\n' "${Item#"${Item%%[![:space:]]*}"}"
+	printf '%s' "${Item#"${Item%%[![:space:]]*}"}"
 }
 
 check_image() {
@@ -346,7 +346,7 @@ multi_select() {
 
 	case $Ret in
 		10) for i in "${SelUUID[@]}"; do gpaste-client delete "$i"; done; exec "$0" ;;
-		11) for i in "${SelIndex[@]}"; do print_item "$i"; done | gpaste-client ; exec "$0" ;;
+		11) for i in "${SelUUID[@]}"; do print_item "$i"; done | gpaste-client ; exec "$0" ;;
 		12) Index=${SelIndex[-1]} exec "$0" ;;
 		0)  gpaste-client select "${SelUUID[-1]}" ;;
 		*)  exit $Ret
@@ -426,7 +426,10 @@ case $1 in
 	-d|--delete)
 		is_index "$2" && gpaste-client --use-index delete $(($2-1)) ;;
 	-p|--paste)
-		is_index "$2" && paste_clip $(($2-1)) ;;
+		is_index "$2" && parse_history && {
+			Index=$(($2-1))
+			[ "$Index" -lt ${#UUIDs[@]} ] && paste_clip "${UUIDs[$Index]}"
+		} ;;
 	-s|--selpaste)
 		paste_selection ;;
 	-S|--seltoclip)
