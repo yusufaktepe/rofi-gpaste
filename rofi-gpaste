@@ -31,6 +31,12 @@ PromptPrefix=' '     # Prefix symbol/text for rofi prompt
 BallotSelected='☑ '   # Symbol for selected item in multi-select mode
 BallotUnselected='☐ ' # Symbol for unselected item in multi-select mode
 
+# When `DeleteEmpty` is `true`, entries containing only whitespace
+# (spaces, tabs) are automatically deleted.
+# * Ideally, the 'Trim items' setting in GPaste should handle this, but
+#   that setting also removes leading/trailing new lines from non-empty entries.
+DeleteEmpty=true
+
 # Rofi command
 _rofi() {
 	# Increase window width by adding:
@@ -112,7 +118,10 @@ dep_check() {
 
 parse_history() {
 	while IFS=: read -r UUID Item; do
-		[ -z "$Item" ] && break
+		${DeleteEmpty:-:} && [ -z "${Item#"${Item%%[![:space:]]*}"}" ] && {
+			gpaste-client delete "$UUID" 2>/dev/null &
+			continue
+		}
 		UUIDs+=("$UUID")
 		Items+=("$Item")
 	done <<< "$(gpaste-client --oneline)"
@@ -120,27 +129,26 @@ parse_history() {
 
 print_history() {
 	for Item in "${Items[@]}"; do
-		[ -z "$Item" ] && break
 		printf '%.1000s\n' "${Item#"${Item%%[![:space:]]*}"}"
 	done
 }
 
 print_item() {
 	# Remove blank lines from the beginning/end
-	Item=$(gpaste-client --use-index get "$1")
-	printf '%s\n' "${Item#"${Item%%[![:space:]]*}"}"
+	Item=$(gpaste-client get "$1")
+	printf '%s' "${Item#"${Item%%[![:space:]]*}"}"
 }
 
 check_image() {
 	Status=$(dconf read /org/gnome/GPaste/images-support)
 	${Status:-false} || return 1
 
-	Index=$1; shift
+	UUID=$1; shift
 
-	read -r Line <<< "$(print_item "$Index")"
+	read -r Line <<< "$(print_item "$UUID")"
 	local ImgRegex="\[Image, [0-9]+ x [0-9]+ \(.*:[0-9]+\)]"
 	[[ $Line =~ ^($ImgRegex)$ ]] && {
-		ImgFile=$(gpaste-client --use-index --raw get "$Index")
+		ImgFile=$(gpaste-client --raw get "$UUID")
 		Image=true
 	}
 
@@ -154,7 +162,7 @@ check_image() {
 }
 
 edit_item() {
-	[ "$1" -eq -1 ] && exit 1
+	[ -z "$1" ] && exit 1
 
 	check_image "$1" && {
 		[ -e "$ImgFile" ] && setsid -f $ImageViewer "$ImgFile" >/dev/null 2>&1
@@ -192,7 +200,7 @@ edit_item() {
 }
 
 archive_item() {
-	[ "$1" -eq -1 ] && exit 1
+	[ -z "$1" ] && exit 1
 
 	check_image "$1" --disable Archive
 
@@ -218,7 +226,7 @@ toggle_track() {
 paste_clip() {
 	dep_check xdotool xclip
 
-	gpaste-client --use-index select "$1" && check_image 0
+	gpaste-client select "$1" && check_image "$1"
 
 	# Send 'Ctrl+v' or 'Shift+Insert' depending on the active window
 	# Because `xdotool type` is unreliable and slow
@@ -242,7 +250,7 @@ paste_selection() {
 }
 
 qr_code() {
-	[ "$1" -eq -1 ] && exit 1
+	[ -z "$1" ] && exit 1
 
 	dep_check qrencode
 	check_image "$1" --disable 'QR Code'
@@ -254,7 +262,7 @@ qr_code() {
 }
 
 save_item() {
-	[ "$1" -eq -1 ] && exit 1
+	[ -z "$1" ] && exit 1
 
 	dep_check zenity
 	check_image "$1" && { [ -e "$ImgFile" ] && Suffix=.png || exit ;}
@@ -338,7 +346,7 @@ multi_select() {
 
 	case $Ret in
 		10) for i in "${SelUUID[@]}"; do gpaste-client delete "$i"; done; exec "$0" ;;
-		11) for i in "${SelIndex[@]}"; do print_item "$i"; done | gpaste-client ; exec "$0" ;;
+		11) for i in "${SelUUID[@]}"; do print_item "$i"; done | gpaste-client ; exec "$0" ;;
 		12) Index=${SelIndex[-1]} exec "$0" ;;
 		0)  gpaste-client select "${SelUUID[-1]}" ;;
 		*)  exit $Ret
@@ -370,26 +378,35 @@ menu() {
 	)
 	Ret=$?
 	Index=${Clip%%:*}
-	UUID=${UUIDs[$Index]}
-
 	[ -z "$Index" ] && exit
+	[ "$Index" -ge 0 ] && UUID=${UUIDs[$Index]}
+
+	input() {
+		Input=${Clip#*:}
+		if [ "$Index" -lt 0 ]; then
+			[ -z "$Input" ] && exit
+			printf '%s' "$Input" | gpaste-client
+		else
+			gpaste-client select "$UUID"
+		fi
+	}
 
 	case $Ret in
 		10) clear_history ;;
 		11) toggle_track ;;
 		12) gpaste-client delete "$UUID"; Index=$Index exec "$0" ;;
-		13) edit_item "$Index"; Index=$Index exec "$0" ;;
-		14) archive_item "$Index"; Index=$Index exec "$0" ;;
+		13) edit_item "$UUID"; Index=$Index exec "$0" ;;
+		14) archive_item "$UUID"; Index=$Index exec "$0" ;;
 		15) backup_history; Index=$Index exec "$0" ;;
 		16) menu_histories ;;
-		17) paste_clip "$Index" ;;
-		18) qr_code "$Index" ;;
-		19) save_item "$Index" ;;
+		17) paste_clip "$UUID" ;;
+		18) qr_code "$UUID" ;;
+		19) save_item "$UUID" ;;
 		20) gpaste-client switch-history history; exec "$0" ;;
 		21) gpaste-client switch-history archive; exec "$0" ;;
 		22) gpaste-client ui ;;
 		23) [ ${#UUIDs[@]} -gt 1 ] && multi_select ;;
-		0)  { [ "$Index" -lt 0 ] && printf '%s' "${Clip#*:}" | gpaste-client ;} || gpaste-client select "$UUID" ;;
+		0)  input ;;
 		*)  exit $Ret
 	esac
 }
@@ -409,7 +426,10 @@ case $1 in
 	-d|--delete)
 		is_index "$2" && gpaste-client --use-index delete $(($2-1)) ;;
 	-p|--paste)
-		is_index "$2" && paste_clip $(($2-1)) ;;
+		is_index "$2" && parse_history && {
+			Index=$(($2-1))
+			[ "$Index" -lt ${#UUIDs[@]} ] && paste_clip "${UUIDs[$Index]}"
+		} ;;
 	-s|--selpaste)
 		paste_selection ;;
 	-S|--seltoclip)
