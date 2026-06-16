@@ -52,6 +52,7 @@ Key binding                                      | Action
 *🡾 Multi-select menu*                            |
 <kbd>Alt</kbd> + <kbd>d</kbd>                    | Delete selected items
 <kbd>Alt</kbd> + <kbd>j</kbd>                    | Join selected items
+<kbd>Alt</kbd> + <kbd>i</kbd>                    | Diff selected items
 <kbd>Alt</kbd> + <kbd>m</kbd>                    | Return to active history
 
 [^1]: These shortcuts will use `xdg-open` by default.

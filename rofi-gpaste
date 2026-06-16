@@ -23,9 +23,11 @@ Kb_Switch_Main='Alt+1'
 Kb_Switch_Archive='Alt+2'
 Kb_LaunchGUI='F1'
 Kb_MultiSelect='Alt+m'
+Kb_Diff='Alt+i'
 Kb_Join='Alt+j'
 
 Editor=xdg-open       # Editor to use for Edit action
+DiffProg="$TERMINAL -e nvim -d"
 ImageViewer=xdg-open  # Image Viewer to use for images/qr codes
 PromptPrefix=' '     # Prefix symbol/text for rofi prompt
 BallotSelected='☑ '   # Symbol for selected item in multi-select mode
@@ -100,6 +102,7 @@ usage() {
 		\r    Multi-select menu
 		\r      - Delete selected items       - $Kb_Delete
 		\r      - Join selected items         - $Kb_Join
+		\r      - Diff selected items         - $Kb_Diff
 		\r      - Return to active history    - $Kb_MultiSelect
 	EOF
 }
@@ -333,7 +336,8 @@ multi_select() {
 			-selected-row "${Index:-0}" \
 			-kb-custom-1 "$Kb_Delete" \
 			-kb-custom-2 "$Kb_Join" \
-			-kb-custom-3 "$Kb_MultiSelect"
+			-kb-custom-3 "$Kb_Diff" \
+			-kb-custom-4 "$Kb_MultiSelect"
 	)
 	Ret=$?
 
@@ -344,10 +348,23 @@ multi_select() {
 
 	[ -z "${SelIndex[0]}" ] && exit
 
+	diff() {
+		local tmp=()
+
+		for i in 1 2 ${3:+3}; do
+			tmp+=("$(mktemp "/tmp/$Script.diff$i.XXXX")")
+			print_item "${!i}" > "${tmp[-1]}"
+		done
+
+		$DiffProg "${tmp[@]}"
+		rm -f -- "${tmp[@]}"
+	}
+
 	case $Ret in
 		10) for i in "${SelUUID[@]}"; do gpaste-client delete "$i"; done; exec "$0" ;;
 		11) for i in "${SelUUID[@]}"; do print_item "$i"; done | gpaste-client ; exec "$0" ;;
-		12) Index=${SelIndex[-1]} exec "$0" ;;
+		12) (( ${#SelUUID[@]} == 2 || ${#SelUUID[@]} == 3 )) && diff "${SelUUID[@]}" ;;
+		13) Index=${SelIndex[-1]} exec "$0" ;;
 		0)  gpaste-client select "${SelUUID[-1]}" ;;
 		*)  exit $Ret
 	esac
